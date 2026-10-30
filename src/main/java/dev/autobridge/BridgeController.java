@@ -21,6 +21,7 @@ public final class BridgeController {
     private static int placementCooldown;
     private static int noBlockWarningCooldown;
     private static int recoveryMessageCooldown;
+    private static boolean autoSneakActive;
     private static long sessionEdgeWarnings;
     private static long sessionPlacementAttempts;
     private static long sessionPlacementAccepted;
@@ -43,6 +44,19 @@ public final class BridgeController {
 
         Direction forward = player.getHorizontalFacing();
         double speed = player.getVelocity().horizontalLength();
+
+        // Automatically hold sneak before walking off a ledge while bridge assist is active.
+        // Only release sneak if this controller was the one that pressed it.
+        boolean edgeAheadForSneak = BridgeConfig.bridgeAssist && BridgeConfig.edgeWarning
+                && client.options.forwardKey.isPressed() && player.isOnGround()
+                && isUnsupportedAhead(world, player, forward, speed);
+        if (edgeAheadForSneak && !player.isSneaking()) {
+            client.options.sneakKey.setPressed(true);
+            autoSneakActive = true;
+        } else if (!edgeAheadForSneak && autoSneakActive) {
+            client.options.sneakKey.setPressed(false);
+            autoSneakActive = false;
+        }
 
         // Predict a missing floor block ahead, with a longer lead while moving quickly.
         if (BridgeConfig.edgeWarning && player.isOnGround()) {
@@ -218,6 +232,16 @@ public final class BridgeController {
                 player.setVelocity(current.x * 0.55, current.y, current.z * 0.55);
             }
         }
+    }
+
+    private static boolean isUnsupportedAhead(World world, ClientPlayerEntity player,
+                                               Direction forward, double speed) {
+        double lead = speed > 0.22 ? 0.85 : speed > 0.12 ? 0.62 : 0.42;
+        BlockPos ahead = BlockPos.ofFloored(
+                player.getX() + forward.getOffsetX() * lead,
+                player.getY() - 0.15,
+                player.getZ() + forward.getOffsetZ() * lead);
+        return world.getBlockState(ahead).isAir() || world.getBlockState(ahead).isReplaceable();
     }
 
     private static void tryPlaceBridgeBlock(MinecraftClient client, ClientPlayerEntity player,
