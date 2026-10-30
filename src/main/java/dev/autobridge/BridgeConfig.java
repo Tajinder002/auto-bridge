@@ -18,6 +18,10 @@ public final class BridgeConfig {
     public static boolean edgeWarning = true;
     public static boolean showHud = true;
     public static boolean persistentStats = true;
+    public static boolean learningEnabled = true;
+    public static long learningAccepted;
+    public static long learningRejected;
+    public static double learnedDelayMultiplier = 1.0;
     public static String bridgeMode = "NORMAL";
     public static double aimStrength = 0.35;
     public static double bridgeDelayTicks = 2.0;
@@ -39,6 +43,10 @@ public final class BridgeConfig {
             edgeWarning = data.edgeWarning;
             showHud = data.showHud;
             persistentStats = data.persistentStats;
+            learningEnabled = data.learningEnabled;
+            learningAccepted = Math.max(0, data.learningAccepted);
+            learningRejected = Math.max(0, data.learningRejected);
+            learnedDelayMultiplier = clamp(data.learnedDelayMultiplier, 0.65, 1.8);
             bridgeMode = normalizeMode(data.bridgeMode);
             aimStrength = clamp(data.aimStrength, 0.0, 1.0);
             bridgeDelayTicks = clamp(data.bridgeDelayTicks, 1.0, 10.0);
@@ -61,6 +69,10 @@ public final class BridgeConfig {
             data.edgeWarning = edgeWarning;
             data.showHud = showHud;
             data.persistentStats = persistentStats;
+            data.learningEnabled = learningEnabled;
+            data.learningAccepted = learningAccepted;
+            data.learningRejected = learningRejected;
+            data.learnedDelayMultiplier = clamp(learnedDelayMultiplier, 0.65, 1.8);
             data.bridgeMode = normalizeMode(bridgeMode);
             data.aimStrength = clamp(aimStrength, 0.0, 1.0);
             data.bridgeDelayTicks = clamp(bridgeDelayTicks, 1.0, 10.0);
@@ -94,6 +106,10 @@ public final class BridgeConfig {
         boolean edgeWarning = true;
         boolean showHud = true;
         boolean persistentStats = true;
+        boolean learningEnabled = true;
+        long learningAccepted;
+        long learningRejected;
+        double learnedDelayMultiplier = 1.0;
         String bridgeMode = "NORMAL";
         double aimStrength = 0.35;
         double bridgeDelayTicks = 2.0;
