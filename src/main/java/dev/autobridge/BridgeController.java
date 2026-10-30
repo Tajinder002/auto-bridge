@@ -97,13 +97,20 @@ public final class BridgeController {
             }
             stack = player.getMainHandStack();
         }
-        if (!isUsefulBridgeBlock(stack, world)) return;
+        if (!isUsefulBridgeBlock(stack, world)) {
+            placementCooldown = 2;
+            if (BridgeConfig.showHud) {
+                player.sendMessage(Text.literal("§bAuto-Bridge §7• §cNo safe bridge blocks selected."), true);
+            }
+            return;
+        }
 
         Vec3d hitPos = Vec3d.ofCenter(support).add(
                 forward.getOffsetX() * 0.5, 0.0, forward.getOffsetZ() * 0.5);
         BlockHitResult hit = new BlockHitResult(hitPos, forward, support, false);
         sessionPlacementAttempts++;
         BridgeConfig.totalPlacementAttempts++;
+        saveStatsIfEnabled();
         net.minecraft.util.ActionResult result =
                 client.interactionManager.interactBlock(player, Hand.MAIN_HAND, hit);
         if (result.isAccepted()) {
