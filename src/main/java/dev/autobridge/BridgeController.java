@@ -41,7 +41,13 @@ public final class BridgeController {
 
         // Predict a missing floor block ahead, with a longer lead while moving quickly.
         if (BridgeConfig.edgeWarning && player.isOnGround()) {
-            double lookAhead = speed > 0.22 ? 0.85 : speed > 0.12 ? 0.60 : 0.38;
+            String mode = BridgeConfig.normalizeMode(BridgeConfig.bridgeMode);
+            double lookAhead = switch (mode) {
+                case "SAFE" -> speed > 0.22 ? 1.00 : speed > 0.12 ? 0.72 : 0.48;
+                case "PRECISE" -> speed > 0.22 ? 0.72 : speed > 0.12 ? 0.52 : 0.34;
+                case "AGGRESSIVE", "FAST" -> speed > 0.22 ? 0.95 : speed > 0.12 ? 0.68 : 0.42;
+                default -> speed > 0.22 ? 0.85 : speed > 0.12 ? 0.60 : 0.38;
+            };
             Vec3d look = new Vec3d(forward.getOffsetX(), 0, forward.getOffsetZ());
             BlockPos aheadFoot = BlockPos.ofFloored(
                     player.getX() + look.x * lookAhead,
@@ -76,7 +82,12 @@ public final class BridgeController {
                 && player.isOnGround() && player.isSneaking()) {
             Vec3d velocity = player.getVelocity();
             if (velocity.horizontalLengthSquared() > 0.0001) {
-                double damping = "SAFE".equals(BridgeConfig.normalizeMode(BridgeConfig.bridgeMode)) ? 0.78 : 0.90;
+                String mode = BridgeConfig.normalizeMode(BridgeConfig.bridgeMode);
+                double damping = switch (mode) {
+                    case "SAFE", "PRECISE" -> 0.72;
+                    case "AGGRESSIVE", "FAST" -> 0.94;
+                    default -> 0.90;
+                };
                 player.setVelocity(velocity.x * damping, velocity.y, velocity.z * damping);
             }
         }
@@ -136,8 +147,10 @@ public final class BridgeController {
             BridgeConfig.totalPlacementAccepted++;
             saveStatsIfEnabled();
             double factor = switch (BridgeConfig.normalizeMode(BridgeConfig.bridgeMode)) {
-                case "SAFE" -> 1.35;
+                case "SAFE" -> 1.45;
+                case "PRECISE" -> 1.15;
                 case "FAST" -> 0.55;
+                case "AGGRESSIVE" -> 0.40;
                 default -> {
                     double speedFactor = speed > 0.22 ? 0.65 : speed > 0.12 ? 0.8 : 1.0;
                     // Simple online adaptation: slow down briefly after repeated rejected
