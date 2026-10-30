@@ -122,7 +122,7 @@ public final class BridgeController {
         int bestCount = -1;
         for (int slot = 0; slot < 9; slot++) {
             ItemStack candidate = player.getInventory().getStack(slot);
-            if (isUsefulBridgeBlock(candidate, player.getWorld()) && candidate.getCount() > bestCount) {
+            if (isUsefulBridgeBlock(candidate, world) && candidate.getCount() > bestCount) {
                 bestSlot = slot;
                 bestCount = candidate.getCount();
             }
