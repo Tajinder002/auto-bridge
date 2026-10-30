@@ -17,8 +17,13 @@ public final class BridgeConfig {
     public static boolean movementAssist = false;
     public static boolean edgeWarning = true;
     public static boolean showHud = true;
+    public static boolean persistentStats = true;
+    public static String bridgeMode = "NORMAL";
     public static double aimStrength = 0.35;
     public static double bridgeDelayTicks = 2.0;
+    public static long totalEdgeWarnings;
+    public static long totalPlacementAttempts;
+    public static long totalPlacementAccepted;
 
     private BridgeConfig() {}
 
@@ -32,8 +37,13 @@ public final class BridgeConfig {
             movementAssist = data.movementAssist;
             edgeWarning = data.edgeWarning;
             showHud = data.showHud;
+            persistentStats = data.persistentStats;
+            bridgeMode = normalizeMode(data.bridgeMode);
             aimStrength = clamp(data.aimStrength, 0.0, 1.0);
             bridgeDelayTicks = clamp(data.bridgeDelayTicks, 1.0, 10.0);
+            totalEdgeWarnings = Math.max(0, data.totalEdgeWarnings);
+            totalPlacementAttempts = Math.max(0, data.totalPlacementAttempts);
+            totalPlacementAccepted = Math.max(0, data.totalPlacementAccepted);
         } catch (IOException | RuntimeException exception) {
             System.err.println("[Auto-Bridge] Could not read config: " + exception.getMessage());
         }
@@ -48,17 +58,28 @@ public final class BridgeConfig {
             data.movementAssist = movementAssist;
             data.edgeWarning = edgeWarning;
             data.showHud = showHud;
-            data.aimStrength = aimStrength;
-            data.bridgeDelayTicks = bridgeDelayTicks;
+            data.persistentStats = persistentStats;
+            data.bridgeMode = normalizeMode(bridgeMode);
+            data.aimStrength = clamp(aimStrength, 0.0, 1.0);
+            data.bridgeDelayTicks = clamp(bridgeDelayTicks, 1.0, 10.0);
+            data.totalEdgeWarnings = totalEdgeWarnings;
+            data.totalPlacementAttempts = totalPlacementAttempts;
+            data.totalPlacementAccepted = totalPlacementAccepted;
             Files.writeString(FILE, GSON.toJson(data));
         } catch (IOException exception) {
             System.err.println("[Auto-Bridge] Could not save config: " + exception.getMessage());
         }
     }
 
+    public static String normalizeMode(String mode) {
+        if (mode == null) return "NORMAL";
+        return switch (mode.toUpperCase(java.util.Locale.ROOT)) {
+            case "SAFE", "FAST" -> mode.toUpperCase(java.util.Locale.ROOT);
+            default -> "NORMAL";
+        };
+    }
+
     private static double clamp(double value, double min, double max) {
-        // JSON can contain NaN or Infinity; never let invalid values leak into
-        // sliders or placement timing.
         if (!Double.isFinite(value)) return min;
         return Math.max(min, Math.min(max, value));
     }
@@ -69,7 +90,12 @@ public final class BridgeConfig {
         boolean movementAssist;
         boolean edgeWarning = true;
         boolean showHud = true;
+        boolean persistentStats = true;
+        String bridgeMode = "NORMAL";
         double aimStrength = 0.35;
         double bridgeDelayTicks = 2.0;
+        long totalEdgeWarnings;
+        long totalPlacementAttempts;
+        long totalPlacementAccepted;
     }
 }
