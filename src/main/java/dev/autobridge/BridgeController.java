@@ -6,6 +6,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -237,17 +238,66 @@ public final class BridgeController {
 
     private static boolean selectHotbarBlock(ClientPlayerEntity player, World world) {
         int bestSlot = -1;
-        int bestCount = -1;
+        int bestScore = Integer.MIN_VALUE;
         for (int slot = 0; slot < 9; slot++) {
             ItemStack candidate = player.getInventory().getStack(slot);
-            if (isUsefulBridgeBlock(candidate, world) && candidate.getCount() > bestCount) {
+            if (!isUsefulBridgeBlock(candidate, world)) continue;
+
+            String itemId = Registries.ITEM.getId(candidate.getItem()).getPath();
+            int score = candidate.getCount() * 10;
+
+            // Prefer abundant, ordinary building blocks for bridging.
+            if (isPreferredBridgeMaterial(itemId)) score += 1000;
+            // Avoid consuming valuable resources when a normal block is available.
+            if (isValuableMaterial(itemId)) score -= 2000;
+
+            if (score > bestScore) {
                 bestSlot = slot;
-                bestCount = candidate.getCount();
+                bestScore = score;
             }
         }
         if (bestSlot < 0) return false;
         player.getInventory().setSelectedSlot(bestSlot);
         return true;
+    }
+
+    private static boolean isPreferredBridgeMaterial(String itemId) {
+        return itemId.equals("cobblestone")
+                || itemId.equals("cobbled_deepslate")
+                || itemId.equals("stone")
+                || itemId.equals("dirt")
+                || itemId.equals("coarse_dirt")
+                || itemId.equals("netherrack")
+                || itemId.equals("blackstone")
+                || itemId.equals("andesite")
+                || itemId.equals("diorite")
+                || itemId.equals("granite")
+                || itemId.equals("tuff")
+                || itemId.equals("deepslate")
+                || itemId.equals("end_stone")
+                || itemId.equals("mossy_cobblestone");
+    }
+
+    private static boolean isValuableMaterial(String itemId) {
+        return itemId.contains("diamond")
+                || itemId.contains("emerald")
+                || itemId.contains("gold")
+                || itemId.contains("iron")
+                || itemId.contains("copper")
+                || itemId.contains("redstone")
+                || itemId.contains("lapis")
+                || itemId.contains("amethyst")
+                || itemId.contains("ancient_debris")
+                || itemId.contains("netherite")
+                || itemId.endsWith("_ore")
+                || itemId.contains("raw_")
+                || itemId.contains("quartz_block")
+                || itemId.contains("obsidian")
+                || itemId.contains("crying_obsidian")
+                || itemId.contains("log")
+                || itemId.contains("wood")
+                || itemId.contains("planks")
+                || itemId.contains("chest");
     }
 
     private static void saveStatsIfEnabled() {
