@@ -151,6 +151,8 @@ public final class BridgeController {
             placementCooldown = Math.max(1, (int) Math.round(BridgeConfig.bridgeDelayTicks * factor));
         } else {
             sessionPlacementRejected++;
+            BridgeConfig.totalPlacementRejected++;
+            saveStatsIfEnabled();
             // Recover from a rejected placement by reducing forward momentum and
             // allowing a short retry window instead of continuing at full speed.
             Vec3d velocity = player.getVelocity();
@@ -256,6 +258,7 @@ public final class BridgeController {
         BridgeConfig.totalEdgeWarnings = 0;
         BridgeConfig.totalPlacementAttempts = 0;
         BridgeConfig.totalPlacementAccepted = 0;
+        BridgeConfig.totalPlacementRejected = 0;
         BridgeConfig.save();
     }
 }
