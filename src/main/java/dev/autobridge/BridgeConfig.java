@@ -57,6 +57,9 @@ public final class BridgeConfig {
     }
 
     private static double clamp(double value, double min, double max) {
+        // JSON can contain NaN or Infinity; never let invalid values leak into
+        // sliders or placement timing.
+        if (!Double.isFinite(value)) return min;
         return Math.max(min, Math.min(max, value));
     }
 
