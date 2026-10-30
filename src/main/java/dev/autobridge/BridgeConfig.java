@@ -24,6 +24,7 @@ public final class BridgeConfig {
     public static long totalEdgeWarnings;
     public static long totalPlacementAttempts;
     public static long totalPlacementAccepted;
+    public static long totalPlacementRejected;
 
     private BridgeConfig() {}
 
@@ -44,6 +45,7 @@ public final class BridgeConfig {
             totalEdgeWarnings = Math.max(0, data.totalEdgeWarnings);
             totalPlacementAttempts = Math.max(0, data.totalPlacementAttempts);
             totalPlacementAccepted = Math.max(0, data.totalPlacementAccepted);
+            totalPlacementRejected = Math.max(0, data.totalPlacementRejected);
         } catch (IOException | RuntimeException exception) {
             System.err.println("[Auto-Bridge] Could not read config: " + exception.getMessage());
         }
@@ -65,6 +67,7 @@ public final class BridgeConfig {
             data.totalEdgeWarnings = totalEdgeWarnings;
             data.totalPlacementAttempts = totalPlacementAttempts;
             data.totalPlacementAccepted = totalPlacementAccepted;
+            data.totalPlacementRejected = totalPlacementRejected;
             Files.writeString(FILE, GSON.toJson(data));
         } catch (IOException exception) {
             System.err.println("[Auto-Bridge] Could not save config: " + exception.getMessage());
@@ -97,5 +100,6 @@ public final class BridgeConfig {
         long totalEdgeWarnings;
         long totalPlacementAttempts;
         long totalPlacementAccepted;
+        long totalPlacementRejected;
     }
 }
