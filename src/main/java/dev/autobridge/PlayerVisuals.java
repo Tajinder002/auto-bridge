@@ -29,7 +29,7 @@ public final class PlayerVisuals {
         matrices.push();
         matrices.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
-        Vec3d start = cameraPos.add(context.camera().getHorizontalPlane().multiply(0.15));
+        Vec3d start = cameraPos;
         for (PlayerEntity target : context.world().getPlayers()) {
             if (target == client.player || !target.isAlive() || target.isSpectator()) continue;
             Box box = target.getBoundingBox().expand(0.035);
