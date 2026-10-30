@@ -98,9 +98,13 @@ public final class AutoBridgeScreen extends Screen {
             BridgeConfig.save();
         }).dimensions(left + 15, top + 240, PANEL_WIDTH - 30, 24).build());
 
+        addDrawableChild(ButtonWidget.builder(Text.literal("View Session History"), button -> {
+            if (client != null) client.setScreen(new SessionHistoryScreen());
+        }).dimensions(left + 15, top + 268, PANEL_WIDTH - 30, 22).build());
+
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset session stats"), button -> {
             BridgeController.resetSessionStats();
-        }).dimensions(left + 15, top + 274, buttonWidth, 24).build());
+        }).dimensions(left + 15, top + 292, buttonWidth, 22).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset settings + stats"), button -> {
             BridgeConfig.bridgeAssist = false;
@@ -115,7 +119,7 @@ public final class AutoBridgeScreen extends Screen {
             BridgeController.resetAllStats();
             BridgeConfig.save();
             clearAndInit();
-        }).dimensions(right, top + 274, buttonWidth, 24).build());
+        }).dimensions(right, top + 292, buttonWidth, 22).build());
     }
 
     private static Text toggleText(String name, boolean enabled) {
