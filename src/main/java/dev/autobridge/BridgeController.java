@@ -1,11 +1,12 @@
 package dev.autobridge;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.FallingBlock;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -18,6 +19,8 @@ public final class BridgeController {
     private static int placementCooldown;
     private static long sessionEdgeWarnings;
     private static long sessionPlacementAttempts;
+    private static long sessionPlacementAccepted;
+    private static long sessionPlacementRejected;
 
     private BridgeController() {}
 
@@ -32,19 +35,24 @@ public final class BridgeController {
         Direction forward = player.getHorizontalFacing();
         double speed = player.getVelocity().horizontalLength();
 
+        // Predict a missing floor block ahead, with a longer lead while moving quickly.
         if (BridgeConfig.edgeWarning && player.isOnGround()) {
-            double lookAhead = speed > 0.12 ? 0.65 : 0.35;
-            Vec3d look = player.getRotationVec(1.0F);
+            double lookAhead = speed > 0.22 ? 0.85 : speed > 0.12 ? 0.60 : 0.38;
+            Vec3d look = new Vec3d(forward.getOffsetX(), 0, forward.getOffsetZ());
             BlockPos aheadFoot = BlockPos.ofFloored(
-                    player.getX() + look.x * lookAhead, player.getY() - 0.15,
+                    player.getX() + look.x * lookAhead,
+                    player.getY() - 0.15,
                     player.getZ() + look.z * lookAhead);
-            boolean unsupported = world.getBlockState(aheadFoot).isAir();
+            boolean unsupported = world.getBlockState(aheadFoot).isAir()
+                    || world.getBlockState(aheadFoot).isReplaceable();
 
             if (unsupported && speed > 0.04 && !player.isSneaking() && warningCooldown == 0) {
                 sessionEdgeWarnings++;
+                BridgeConfig.totalEdgeWarnings++;
                 warningCooldown = 30;
+                saveStatsIfEnabled();
                 if (BridgeConfig.showHud) {
-                    player.sendMessage(net.minecraft.text.Text.literal(
+                    player.sendMessage(Text.literal(
                             "§bAuto-Bridge §7• §eEdge ahead — sneak or stop to avoid falling."), true);
                 }
             }
@@ -54,32 +62,39 @@ public final class BridgeController {
                 && player.isOnGround() && player.isSneaking()) {
             Vec3d velocity = player.getVelocity();
             if (velocity.horizontalLengthSquared() > 0.0001) {
-                player.setVelocity(velocity.x * 0.90, velocity.y, velocity.z * 0.90);
+                double damping = "SAFE".equals(BridgeConfig.normalizeMode(BridgeConfig.bridgeMode)) ? 0.78 : 0.90;
+                player.setVelocity(velocity.x * damping, velocity.y, velocity.z * damping);
             }
         }
 
-        // Only attempt placement during deliberate forward movement.
         if (BridgeConfig.bridgeAssist
                 && client.options.forwardKey.isPressed() && placementCooldown == 0
                 && speed > 0.03) {
-            tryPlaceBridgeBlock(client, player, world, forward);
+            tryPlaceBridgeBlock(client, player, world, forward, speed);
         }
     }
 
     private static void tryPlaceBridgeBlock(MinecraftClient client, ClientPlayerEntity player,
-                                            World world, Direction forward) {
+                                            World world, Direction forward, double speed) {
         BlockPos support = BlockPos.ofFloored(player.getX(), player.getY() - 0.05, player.getZ());
+        if (!isSolidSupport(world, support)) support = support.offset(forward.getOpposite());
         if (!isSolidSupport(world, support)) {
-            support = support.offset(forward.getOpposite());
+            placementCooldown = 1;
+            return;
         }
-        if (!isSolidSupport(world, support)) return;
 
         BlockPos target = support.offset(forward);
-        if (!world.getBlockState(target).isReplaceable()) return;
+        if (!world.getBlockState(target).isReplaceable()) {
+            placementCooldown = 1;
+            return;
+        }
 
         ItemStack stack = player.getMainHandStack();
         if (!isUsefulBridgeBlock(stack, world)) {
-            if (!selectHotbarBlock(player, world)) return;
+            if (!selectHotbarBlock(player, world)) {
+                placementCooldown = 2;
+                return;
+            }
             stack = player.getMainHandStack();
         }
         if (!isUsefulBridgeBlock(stack, world)) return;
@@ -87,18 +102,23 @@ public final class BridgeController {
         Vec3d hitPos = Vec3d.ofCenter(support).add(
                 forward.getOffsetX() * 0.5, 0.0, forward.getOffsetZ() * 0.5);
         BlockHitResult hit = new BlockHitResult(hitPos, forward, support, false);
+        sessionPlacementAttempts++;
+        BridgeConfig.totalPlacementAttempts++;
         net.minecraft.util.ActionResult result =
                 client.interactionManager.interactBlock(player, Hand.MAIN_HAND, hit);
         if (result.isAccepted()) {
             player.swingHand(Hand.MAIN_HAND);
-            sessionPlacementAttempts++;
-            // Adaptive timing: keep the configured delay at low speed, but shorten it
-            // slightly while moving faster so placement can keep up with the bridge run.
-            double speed = player.getVelocity().horizontalLength();
-            double speedFactor = speed > 0.22 ? 0.65 : speed > 0.12 ? 0.8 : 1.0;
-            placementCooldown = Math.max(1,
-                    (int) Math.round(BridgeConfig.bridgeDelayTicks * speedFactor));
+            sessionPlacementAccepted++;
+            BridgeConfig.totalPlacementAccepted++;
+            saveStatsIfEnabled();
+            double factor = switch (BridgeConfig.normalizeMode(BridgeConfig.bridgeMode)) {
+                case "SAFE" -> 1.35;
+                case "FAST" -> 0.55;
+                default -> speed > 0.22 ? 0.65 : speed > 0.12 ? 0.8 : 1.0;
+            };
+            placementCooldown = Math.max(1, (int) Math.round(BridgeConfig.bridgeDelayTicks * factor));
         } else {
+            sessionPlacementRejected++;
             placementCooldown = 1;
         }
     }
@@ -108,8 +128,6 @@ public final class BridgeController {
                 && world.getBlockState(pos).isSolidBlock(world, pos);
     }
 
-    // Prefer full solid blocks that can safely support the player; avoid gravity blocks
-    // such as sand and gravel, and avoid non-solid block items such as torches.
     private static boolean isUsefulBridgeBlock(ItemStack stack, World world) {
         if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) return false;
         Block block = blockItem.getBlock();
@@ -132,16 +150,27 @@ public final class BridgeController {
         return true;
     }
 
-    public static long getSessionEdgeWarnings() {
-        return sessionEdgeWarnings;
+    private static void saveStatsIfEnabled() {
+        if (BridgeConfig.persistentStats) BridgeConfig.save();
     }
 
-    public static long getSessionPlacementAttempts() {
-        return sessionPlacementAttempts;
-    }
+    public static long getSessionEdgeWarnings() { return sessionEdgeWarnings; }
+    public static long getSessionPlacementAttempts() { return sessionPlacementAttempts; }
+    public static long getSessionPlacementAccepted() { return sessionPlacementAccepted; }
+    public static long getSessionPlacementRejected() { return sessionPlacementRejected; }
 
     public static void resetSessionStats() {
         sessionEdgeWarnings = 0;
         sessionPlacementAttempts = 0;
+        sessionPlacementAccepted = 0;
+        sessionPlacementRejected = 0;
+    }
+
+    public static void resetAllStats() {
+        resetSessionStats();
+        BridgeConfig.totalEdgeWarnings = 0;
+        BridgeConfig.totalPlacementAttempts = 0;
+        BridgeConfig.totalPlacementAccepted = 0;
+        BridgeConfig.save();
     }
 }
