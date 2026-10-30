@@ -118,6 +118,10 @@ public final class AutoBridgeScreen extends Screen {
         return (int) Math.round(value * 100) + "%";
     }
 
+    private static String successRate(long accepted, long attempts) {
+        return attempts <= 0 ? "0%" : Math.round(accepted * 100.0 / attempts) + "%";
+    }
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         renderBackground(context, mouseX, mouseY, delta);
@@ -128,16 +132,21 @@ public final class AutoBridgeScreen extends Screen {
         context.drawCenteredTextWithShadow(this.textRenderer, "AUTO-BRIDGE", this.width / 2, top + 12, 0xFFFFFFFF);
         context.drawCenteredTextWithShadow(this.textRenderer, "Minecraft 1.21.11 • Private-server practice", this.width / 2, top + 29, 0xFFB8B8D0);
         context.drawCenteredTextWithShadow(this.textRenderer,
-                "Session: edges " + BridgeController.getSessionEdgeWarnings()
-                        + " | attempts " + BridgeController.getSessionPlacementAttempts()
-                        + " | accepted " + BridgeController.getSessionPlacementAccepted()
-                        + " | rejected " + BridgeController.getSessionPlacementRejected(),
+                "Session success: " + successRate(BridgeController.getSessionPlacementAccepted(),
+                        BridgeController.getSessionPlacementAttempts())
+                        + " (" + BridgeController.getSessionPlacementAccepted() + "/"
+                        + BridgeController.getSessionPlacementAttempts() + ")",
                 this.width / 2, top + 46, 0xFFE4D7FF);
         context.drawCenteredTextWithShadow(this.textRenderer,
-                "All-time: edges " + BridgeConfig.totalEdgeWarnings
-                        + " | attempts " + BridgeConfig.totalPlacementAttempts
-                        + " | accepted " + BridgeConfig.totalPlacementAccepted,
+                "Session: edges " + BridgeController.getSessionEdgeWarnings()
+                        + " | rejected " + BridgeController.getSessionPlacementRejected(),
                 this.width / 2, top + 57, 0xFFB8B8D0);
+        context.drawCenteredTextWithShadow(this.textRenderer,
+                "All-time success: " + successRate(BridgeConfig.totalPlacementAccepted,
+                        BridgeConfig.totalPlacementAttempts)
+                        + " (" + BridgeConfig.totalPlacementAccepted + "/"
+                        + BridgeConfig.totalPlacementAttempts + ")",
+                this.width / 2, top + 310, 0xFFB8B8D0);
         super.render(context, mouseX, mouseY, delta);
     }
 
