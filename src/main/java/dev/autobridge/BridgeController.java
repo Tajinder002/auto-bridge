@@ -92,7 +92,12 @@ public final class BridgeController {
         if (result.isAccepted()) {
             player.swingHand(Hand.MAIN_HAND);
             sessionPlacementAttempts++;
-            placementCooldown = Math.max(1, (int) Math.round(BridgeConfig.bridgeDelayTicks));
+            // Adaptive timing: keep the configured delay at low speed, but shorten it
+            // slightly while moving faster so placement can keep up with the bridge run.
+            double speed = player.getVelocity().horizontalLength();
+            double speedFactor = speed > 0.22 ? 0.65 : speed > 0.12 ? 0.8 : 1.0;
+            placementCooldown = Math.max(1,
+                    (int) Math.round(BridgeConfig.bridgeDelayTicks * speedFactor));
         } else {
             placementCooldown = 1;
         }
