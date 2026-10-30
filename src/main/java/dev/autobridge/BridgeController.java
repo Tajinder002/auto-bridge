@@ -79,24 +79,65 @@ public final class BridgeController {
             }
         }
 
-        if (BridgeConfig.bridgeAssist && BridgeConfig.movementAssist
-                && player.isOnGround() && player.isSneaking()) {
-            Vec3d velocity = player.getVelocity();
-            if (velocity.horizontalLengthSquared() > 0.0001) {
-                String mode = BridgeConfig.normalizeMode(BridgeConfig.bridgeMode);
-                double damping = switch (mode) {
-                    case "SAFE", "PRECISE" -> 0.72;
-                    case "AGGRESSIVE", "FAST" -> 0.94;
-                    default -> 0.90;
-                };
-                player.setVelocity(velocity.x * damping, velocity.y, velocity.z * damping);
-            }
+        if (BridgeConfig.bridgeAssist && BridgeConfig.movementAssist) {
+            applyMovementAssist(client, player, forward, speed);
         }
 
         if (BridgeConfig.bridgeAssist
                 && client.options.forwardKey.isPressed() && placementCooldown == 0
                 && speed > 0.03) {
             tryPlaceBridgeBlock(client, player, world, forward, speed);
+        }
+    }
+
+    private static void applyMovementAssist(MinecraftClient client, ClientPlayerEntity player,
+                                             Direction forward, double speed) {
+        Vec3d velocity = player.getVelocity();
+        String mode = BridgeConfig.normalizeMode(BridgeConfig.bridgeMode);
+
+        // Smooth excess sideways drift while bridging, but preserve vertical motion.
+        double forwardX = forward.getOffsetX();
+        double forwardZ = forward.getOffsetZ();
+        double forwardSpeed = velocity.x * forwardX + velocity.z * forwardZ;
+        double sideX = velocity.x - forwardX * forwardSpeed;
+        double sideZ = velocity.z - forwardZ * forwardSpeed;
+        double sideDamping = switch (mode) {
+            case "SAFE", "PRECISE" -> 0.55;
+            case "AGGRESSIVE", "FAST" -> 0.88;
+            default -> 0.72;
+        };
+
+        double x = forwardX * forwardSpeed + sideX * sideDamping;
+        double z = forwardZ * forwardSpeed + sideZ * sideDamping;
+
+        // Sneaking near an edge should be controlled; normal forward movement remains responsive.
+        if (player.isOnGround() && player.isSneaking()) {
+            double sneakDamping = switch (mode) {
+                case "SAFE", "PRECISE" -> 0.72;
+                case "AGGRESSIVE", "FAST" -> 0.94;
+                default -> 0.84;
+            };
+            x *= sneakDamping;
+            z *= sneakDamping;
+        }
+
+        // Avoid adding movement when the player is not actively moving.
+        if (speed > 0.015 && (Math.abs(x - velocity.x) > 0.002 || Math.abs(z - velocity.z) > 0.002)) {
+            player.setVelocity(x, velocity.y, z);
+        }
+
+        // Briefly brake when the edge detector sees unsupported ground ahead.
+        if (BridgeConfig.edgeWarning && BridgeConfig.bridgeAssist && player.isOnGround()
+                && !player.isSneaking() && client.options.forwardKey.isPressed() && speed > 0.04) {
+            BlockPos ahead = BlockPos.ofFloored(
+                    player.getX() + forwardX * (speed > 0.22 ? 0.80 : 0.48),
+                    player.getY() - 0.15,
+                    player.getZ() + forwardZ * (speed > 0.22 ? 0.80 : 0.48));
+            if (client.world != null && (client.world.getBlockState(ahead).isAir()
+                    || client.world.getBlockState(ahead).isReplaceable())) {
+                Vec3d current = player.getVelocity();
+                player.setVelocity(current.x * 0.55, current.y, current.z * 0.55);
+            }
         }
     }
 
