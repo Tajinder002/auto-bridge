@@ -105,11 +105,11 @@ public final class BridgeController {
         double bestAngle = 24.0;
         for (net.minecraft.entity.LivingEntity target :
                 client.world.getEntitiesByClass(net.minecraft.entity.LivingEntity.class,
-                        player.getBoundingBox().expand(4.5),
+                        player.getBoundingBox().expand(BridgeConfig.aimRange),
                         entity -> entity != player && entity.isAlive() && !entity.isSpectator())) {
             Vec3d delta = target.getEyePos().subtract(eye);
             double distance = delta.length();
-            if (distance < 0.001 || distance > 4.5) continue;
+            if (distance < 0.001 || distance > BridgeConfig.aimRange) continue;
             double yaw = Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90.0;
             double pitch = -Math.toDegrees(Math.atan2(delta.y,
                     Math.sqrt(delta.x * delta.x + delta.z * delta.z)));
@@ -130,7 +130,7 @@ public final class BridgeController {
         // Deliberately restricted to single-player practice worlds.
         if (!client.isInSingleplayer() || !client.options.attackKey.isPressed()) return;
 
-        net.minecraft.util.math.Box searchBox = player.getBoundingBox().expand(5.0);
+        net.minecraft.util.math.Box searchBox = player.getBoundingBox().expand(BridgeConfig.aimRange);
         net.minecraft.entity.LivingEntity bestTarget = null;
         double bestAngle = Double.MAX_VALUE;
         Vec3d eye = player.getEyePos();
@@ -140,7 +140,7 @@ public final class BridgeController {
                         entity -> entity != player && entity.isAlive() && !entity.isSpectator())) {
             Vec3d toTarget = target.getEyePos().subtract(eye);
             double distance = toTarget.length();
-            if (distance < 0.001 || distance > 5.0) continue;
+            if (distance < 0.001 || distance > BridgeConfig.aimRange) continue;
 
             double targetYaw = Math.toDegrees(Math.atan2(toTarget.z, toTarget.x)) - 90.0;
             double targetPitch = -Math.toDegrees(Math.atan2(toTarget.y,
@@ -150,7 +150,7 @@ public final class BridgeController {
             double angle = Math.sqrt(yawDelta * yawDelta + pitchDelta * pitchDelta);
 
             // Keep assistance subtle and require the target to already be near the crosshair.
-            if (angle <= 28.0 && angle < bestAngle) {
+            if (angle <= BridgeConfig.aimAngle && angle < bestAngle) {
                 bestAngle = angle;
                 bestTarget = target;
             }
