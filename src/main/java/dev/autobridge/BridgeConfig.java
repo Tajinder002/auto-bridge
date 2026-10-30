@@ -14,6 +14,7 @@ public final class BridgeConfig {
 
     public static boolean bridgeAssist = false;
     public static boolean aimAssist = false;
+    public static boolean silentAimPractice = false;
     public static boolean movementAssist = false;
     public static boolean edgeWarning = true;
     public static boolean showHud = true;
@@ -39,6 +40,7 @@ public final class BridgeConfig {
             if (data == null) return;
             bridgeAssist = data.bridgeAssist;
             aimAssist = data.aimAssist;
+            silentAimPractice = data.silentAimPractice;
             movementAssist = data.movementAssist;
             edgeWarning = data.edgeWarning;
             showHud = data.showHud;
@@ -65,6 +67,7 @@ public final class BridgeConfig {
             Data data = new Data();
             data.bridgeAssist = bridgeAssist;
             data.aimAssist = aimAssist;
+            data.silentAimPractice = silentAimPractice;
             data.movementAssist = movementAssist;
             data.edgeWarning = edgeWarning;
             data.showHud = showHud;
@@ -102,6 +105,7 @@ public final class BridgeConfig {
     private static final class Data {
         boolean bridgeAssist;
         boolean aimAssist;
+        boolean silentAimPractice;
         boolean movementAssist;
         boolean edgeWarning = true;
         boolean showHud = true;
