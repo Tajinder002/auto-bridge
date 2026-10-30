@@ -17,6 +17,7 @@ import net.minecraft.world.World;
 public final class BridgeController {
     private static int warningCooldown;
     private static int placementCooldown;
+    private static int noBlockWarningCooldown;
     private static long sessionEdgeWarnings;
     private static long sessionPlacementAttempts;
     private static long sessionPlacementAccepted;
@@ -31,6 +32,7 @@ public final class BridgeController {
 
         if (warningCooldown > 0) warningCooldown--;
         if (placementCooldown > 0) placementCooldown--;
+        if (noBlockWarningCooldown > 0) noBlockWarningCooldown--;
 
         Direction forward = player.getHorizontalFacing();
         double speed = player.getVelocity().horizontalLength();
@@ -76,9 +78,8 @@ public final class BridgeController {
 
     private static void tryPlaceBridgeBlock(MinecraftClient client, ClientPlayerEntity player,
                                             World world, Direction forward, double speed) {
-        BlockPos support = BlockPos.ofFloored(player.getX(), player.getY() - 0.05, player.getZ());
-        if (!isSolidSupport(world, support)) support = support.offset(forward.getOpposite());
-        if (!isSolidSupport(world, support)) {
+        BlockPos support = findSupport(world, player, forward);
+        if (support == null) {
             placementCooldown = 1;
             return;
         }
@@ -93,6 +94,10 @@ public final class BridgeController {
         if (!isUsefulBridgeBlock(stack, world)) {
             if (!selectHotbarBlock(player, world)) {
                 placementCooldown = 2;
+                if (BridgeConfig.showHud && noBlockWarningCooldown == 0) {
+                    player.sendMessage(Text.literal("§bAuto-Bridge §7• §cNo safe bridge blocks in hotbar."), true);
+                    noBlockWarningCooldown = 60;
+                }
                 return;
             }
             stack = player.getMainHandStack();
@@ -128,6 +133,24 @@ public final class BridgeController {
             sessionPlacementRejected++;
             placementCooldown = 1;
         }
+    }
+
+    // Search a small set of nearby support blocks to handle minor height/position changes.
+    private static BlockPos findSupport(World world, ClientPlayerEntity player, Direction forward) {
+        BlockPos feet = BlockPos.ofFloored(player.getX(), player.getY() - 0.05, player.getZ());
+        BlockPos[] candidates = {
+                feet,
+                feet.down(),
+                feet.offset(forward.getOpposite()),
+                feet.down().offset(forward.getOpposite())
+        };
+        for (BlockPos candidate : candidates) {
+            if (isSolidSupport(world, candidate)
+                    && world.getBlockState(candidate.offset(forward)).isReplaceable()) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private static boolean isSolidSupport(World world, BlockPos pos) {
