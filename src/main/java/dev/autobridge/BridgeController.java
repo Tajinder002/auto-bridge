@@ -58,7 +58,7 @@ public final class BridgeController {
 
         // Place only while the player is deliberately moving forward, has a block selected,
         // and a solid support block exists. This uses normal client interaction packets.
-        if (BridgeConfig.bridgeAssist && player.isOnGround()
+        if (BridgeConfig.bridgeAssist
                 && client.options.forwardKey.isPressed() && placementCooldown == 0
                 && player.getVelocity().horizontalLength() > 0.03) {
             tryPlaceBridgeBlock(client, player, world, forward);
@@ -90,10 +90,18 @@ public final class BridgeController {
         Vec3d hitPos = Vec3d.ofCenter(support).add(
                 forward.getOffsetX() * 0.5, 0.0, forward.getOffsetZ() * 0.5);
         BlockHitResult hit = new BlockHitResult(hitPos, forward, support, false);
-        client.interactionManager.interactBlock(player, Hand.MAIN_HAND, hit);
-        player.swingHand(Hand.MAIN_HAND);
-        sessionPlacementAttempts++;
-        placementCooldown = Math.max(1, (int) Math.round(BridgeConfig.bridgeDelayTicks));
+        // Count only interactions accepted by the client; server-side protection or
+        // a rejected interaction can still prevent the block from appearing.
+        net.minecraft.util.ActionResult result =
+                client.interactionManager.interactBlock(player, Hand.MAIN_HAND, hit);
+        if (result.isAccepted()) {
+            player.swingHand(Hand.MAIN_HAND);
+            sessionPlacementAttempts++;
+            placementCooldown = Math.max(1, (int) Math.round(BridgeConfig.bridgeDelayTicks));
+        } else {
+            // Retry quickly rather than waiting the full configured delay after rejection.
+            placementCooldown = 1;
+        }
     }
 
     private static boolean selectHotbarBlock(ClientPlayerEntity player) {
