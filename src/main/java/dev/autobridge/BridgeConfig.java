@@ -117,6 +117,8 @@ public final class BridgeConfig {
         String bridgeMode = "NORMAL";
         double aimStrength = 0.35;
         double bridgeDelayTicks = 2.0;
+        double aimRange = 5.0;
+        double aimAngle = 28.0;
         long totalEdgeWarnings;
         long totalPlacementAttempts;
         long totalPlacementAccepted;
