@@ -18,6 +18,7 @@ public final class BridgeController {
     private static int warningCooldown;
     private static int placementCooldown;
     private static int noBlockWarningCooldown;
+    private static int recoveryMessageCooldown;
     private static long sessionEdgeWarnings;
     private static long sessionPlacementAttempts;
     private static long sessionPlacementAccepted;
@@ -33,6 +34,7 @@ public final class BridgeController {
         if (warningCooldown > 0) warningCooldown--;
         if (placementCooldown > 0) placementCooldown--;
         if (noBlockWarningCooldown > 0) noBlockWarningCooldown--;
+        if (recoveryMessageCooldown > 0) recoveryMessageCooldown--;
 
         Direction forward = player.getHorizontalFacing();
         double speed = player.getVelocity().horizontalLength();
@@ -56,6 +58,16 @@ public final class BridgeController {
                 if (BridgeConfig.showHud) {
                     player.sendMessage(Text.literal(
                             "§bAuto-Bridge §7• §eEdge ahead — sneak or stop to avoid falling."), true);
+                }
+                // Emergency recovery: reduce momentum near a detected edge while bridging.
+                if (BridgeConfig.bridgeAssist && client.options.forwardKey.isPressed()) {
+                    Vec3d velocity = player.getVelocity();
+                    player.setVelocity(velocity.x * 0.35, velocity.y, velocity.z * 0.35);
+                    if (recoveryMessageCooldown == 0 && BridgeConfig.showHud) {
+                        player.sendMessage(Text.literal(
+                                "§bAuto-Bridge §7• §cEmergency recovery: slowing near edge."), true);
+                        recoveryMessageCooldown = 40;
+                    }
                 }
             }
         }
@@ -139,7 +151,16 @@ public final class BridgeController {
             placementCooldown = Math.max(1, (int) Math.round(BridgeConfig.bridgeDelayTicks * factor));
         } else {
             sessionPlacementRejected++;
-            placementCooldown = 1;
+            // Recover from a rejected placement by reducing forward momentum and
+            // allowing a short retry window instead of continuing at full speed.
+            Vec3d velocity = player.getVelocity();
+            player.setVelocity(velocity.x * 0.45, velocity.y, velocity.z * 0.45);
+            placementCooldown = 3;
+            if (BridgeConfig.showHud && recoveryMessageCooldown == 0) {
+                player.sendMessage(Text.literal(
+                        "§bAuto-Bridge §7• §ePlacement failed — slowing down to recover."), true);
+                recoveryMessageCooldown = 40;
+            }
         }
     }
 
