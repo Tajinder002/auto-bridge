@@ -105,7 +105,7 @@ public final class BridgeController {
         }
 
         if (BridgeConfig.bridgeAssist && BridgeConfig.movementAssist) {
-            applyMovementAssist(client, player, forward, speed);
+            applyMovementAssist(client, player, bridgeDirection, speed);
         }
 
         if (BridgeConfig.bridgeAssist
