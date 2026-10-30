@@ -39,8 +39,6 @@ public final class BridgeController {
         if (noBlockWarningCooldown > 0) noBlockWarningCooldown--;
         if (recoveryMessageCooldown > 0) recoveryMessageCooldown--;
 
-        if (BridgeConfig.silentAimPractice) applySilentAimPractice(client, player);
-        if (BridgeConfig.aimAssist) applyPracticeAimAssist(client, player);
 
         Direction facing = player.getHorizontalFacing();
         boolean movingForward = client.options.forwardKey.isPressed();
@@ -376,9 +374,15 @@ public final class BridgeController {
             double dx = (candidate.getX() + 0.5) - player.getX();
             double dz = (candidate.getZ() + 0.5) - player.getZ();
             double distanceScore = dx * dx + dz * dz;
-            double forwardScore = candidate.getX() * forward.getOffsetX()
-                    + candidate.getZ() * forward.getOffsetZ();
-            double score = distanceScore - forwardScore * 0.12
+            // Score progress relative to the player, not absolute world coordinates.
+            // Absolute block coordinates caused different placement choices at different map locations.
+            double forwardProgress = (candidate.getX() - player.getX()) * forward.getOffsetX()
+                    + (candidate.getZ() - player.getZ()) * forward.getOffsetZ();
+            double lateralOffset = Math.abs(
+                    (candidate.getX() - player.getX()) * forward.getOffsetZ()
+                            - (candidate.getZ() - player.getZ()) * forward.getOffsetX());
+            double score = distanceScore - forwardProgress * 0.18
+                    + lateralOffset * 0.65
                     + (candidate.getY() < feet.getY() ? 0.15 : 0.0);
             if (score < bestScore) {
                 bestScore = score;
