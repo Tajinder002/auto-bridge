@@ -26,6 +26,8 @@ public final class BridgeConfig {
     public static String bridgeMode = "NORMAL";
     public static double aimStrength = 0.35;
     public static double bridgeDelayTicks = 2.0;
+    public static double aimRange = 5.0;
+    public static double aimAngle = 28.0;
     public static long totalEdgeWarnings;
     public static long totalPlacementAttempts;
     public static long totalPlacementAccepted;
@@ -52,6 +54,8 @@ public final class BridgeConfig {
             bridgeMode = normalizeMode(data.bridgeMode);
             aimStrength = clamp(data.aimStrength, 0.0, 1.0);
             bridgeDelayTicks = clamp(data.bridgeDelayTicks, 1.0, 10.0);
+            aimRange = clamp(data.aimRange, 2.0, 8.0);
+            aimAngle = clamp(data.aimAngle, 10.0, 45.0);
             totalEdgeWarnings = Math.max(0, data.totalEdgeWarnings);
             totalPlacementAttempts = Math.max(0, data.totalPlacementAttempts);
             totalPlacementAccepted = Math.max(0, data.totalPlacementAccepted);
@@ -79,6 +83,8 @@ public final class BridgeConfig {
             data.bridgeMode = normalizeMode(bridgeMode);
             data.aimStrength = clamp(aimStrength, 0.0, 1.0);
             data.bridgeDelayTicks = clamp(bridgeDelayTicks, 1.0, 10.0);
+            data.aimRange = clamp(aimRange, 2.0, 8.0);
+            data.aimAngle = clamp(aimAngle, 10.0, 45.0);
             data.totalEdgeWarnings = totalEdgeWarnings;
             data.totalPlacementAttempts = totalPlacementAttempts;
             data.totalPlacementAccepted = totalPlacementAccepted;
