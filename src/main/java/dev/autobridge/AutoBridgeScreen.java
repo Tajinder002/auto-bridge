@@ -8,7 +8,7 @@ import net.minecraft.text.Text;
 
 public final class AutoBridgeScreen extends Screen {
     private static final int PANEL_WIDTH = 360;
-    private static final int PANEL_HEIGHT = 286;
+    private static final int PANEL_HEIGHT = 302;
 
     public AutoBridgeScreen() {
         super(Text.literal("Auto-Bridge"));
@@ -76,7 +76,7 @@ public final class AutoBridgeScreen extends Screen {
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset session stats"), button -> {
             BridgeController.resetSessionStats();
-        }).dimensions(left + 15, top + 225, buttonWidth, 24).build());
+        }).dimensions(left + 15, top + 241, buttonWidth, 24).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset settings"), button -> {
             BridgeConfig.bridgeAssist = false;
@@ -88,7 +88,7 @@ public final class AutoBridgeScreen extends Screen {
             BridgeConfig.bridgeDelayTicks = 2.0;
             BridgeConfig.save();
             clearAndInit();
-        }).dimensions(right, top + 225, buttonWidth, 24).build());
+        }).dimensions(right, top + 241, buttonWidth, 24).build());
     }
 
     private static Text toggleText(String name, boolean enabled) {
@@ -109,7 +109,8 @@ public final class AutoBridgeScreen extends Screen {
         context.drawCenteredTextWithShadow(this.textRenderer, "AUTO-BRIDGE", this.width / 2, top + 14, 0xFFFFFFFF);
         context.drawCenteredTextWithShadow(this.textRenderer, "Minecraft 1.21.11 • Private-server practice", this.width / 2, top + 32, 0xFFB8B8D0);
         context.drawCenteredTextWithShadow(this.textRenderer,
-                "Session edge warnings: " + BridgeController.getSessionEdgeWarnings(),
+                "Edge warnings: " + BridgeController.getSessionEdgeWarnings()
+                        + "  |  Placement attempts: " + BridgeController.getSessionPlacementAttempts(),
                 this.width / 2, top + 48, 0xFFE4D7FF);
         super.render(context, mouseX, mouseY, delta);
     }
