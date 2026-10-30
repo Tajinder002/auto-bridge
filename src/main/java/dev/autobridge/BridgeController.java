@@ -143,22 +143,48 @@ public final class BridgeController {
         }
     }
 
-    // Search a small set of nearby support blocks to handle minor height/position changes.
+    // Smart placement search: inspect nearby support blocks and score them by
+    // forward alignment, distance, and whether the target cell is safely replaceable.
     private static BlockPos findSupport(World world, ClientPlayerEntity player, Direction forward) {
         BlockPos feet = BlockPos.ofFloored(player.getX(), player.getY() - 0.05, player.getZ());
+        Direction side = forward.rotateYClockwise();
+        Direction otherSide = forward.rotateYCounterclockwise();
         BlockPos[] candidates = {
                 feet,
                 feet.down(),
                 feet.offset(forward.getOpposite()),
-                feet.down().offset(forward.getOpposite())
+                feet.down().offset(forward.getOpposite()),
+                feet.offset(side),
+                feet.down().offset(side),
+                feet.offset(otherSide),
+                feet.down().offset(otherSide),
+                feet.offset(forward, -2),
+                feet.down().offset(forward, -2)
         };
+
+        BlockPos best = null;
+        double bestScore = Double.POSITIVE_INFINITY;
         for (BlockPos candidate : candidates) {
-            if (isSolidSupport(world, candidate)
-                    && world.getBlockState(candidate.offset(forward)).isReplaceable()) {
-                return candidate;
+            if (!isSolidSupport(world, candidate)) continue;
+
+            BlockPos target = candidate.offset(forward);
+            if (!world.getBlockState(target).isReplaceable()) continue;
+            // Avoid attempting a placement when the target is occupied by a fluid.
+            if (!world.getFluidState(target).isEmpty()) continue;
+
+            double dx = (candidate.getX() + 0.5) - player.getX();
+            double dz = (candidate.getZ() + 0.5) - player.getZ();
+            double distanceScore = dx * dx + dz * dz;
+            double forwardScore = candidate.getX() * forward.getOffsetX()
+                    + candidate.getZ() * forward.getOffsetZ();
+            double score = distanceScore - forwardScore * 0.12
+                    + (candidate.getY() < feet.getY() ? 0.15 : 0.0);
+            if (score < bestScore) {
+                bestScore = score;
+                best = candidate;
             }
         }
-        return null;
+        return best;
     }
 
     private static boolean isSolidSupport(World world, BlockPos pos) {
