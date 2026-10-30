@@ -65,7 +65,7 @@ public final class AdvancedSettingsScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
+        context.fill(0, 0, this.width, this.height, 0xC0101018);
         int left = (width - PANEL_WIDTH) / 2;
         int top = (height - PANEL_HEIGHT) / 2;
         context.fill(left, top, left + PANEL_WIDTH, top + PANEL_HEIGHT, 0xF0181A27);
