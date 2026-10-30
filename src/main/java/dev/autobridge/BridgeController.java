@@ -126,7 +126,15 @@ public final class BridgeController {
             double factor = switch (BridgeConfig.normalizeMode(BridgeConfig.bridgeMode)) {
                 case "SAFE" -> 1.35;
                 case "FAST" -> 0.55;
-                default -> speed > 0.22 ? 0.65 : speed > 0.12 ? 0.8 : 1.0;
+                default -> {
+                    double speedFactor = speed > 0.22 ? 0.65 : speed > 0.12 ? 0.8 : 1.0;
+                    // Simple online adaptation: slow down briefly after repeated rejected
+                    // placements, and retain normal timing when placements are succeeding.
+                    double rejectionRate = sessionPlacementAttempts == 0 ? 0.0
+                            : (double) sessionPlacementRejected / sessionPlacementAttempts;
+                    double learningFactor = rejectionRate > 0.35 ? 1.25 : 1.0;
+                    yield speedFactor * learningFactor;
+                }
             };
             placementCooldown = Math.max(1, (int) Math.round(BridgeConfig.bridgeDelayTicks * factor));
         } else {
