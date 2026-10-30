@@ -147,6 +147,9 @@ public final class AutoBridgeScreen extends Screen {
                         + " (" + BridgeConfig.totalPlacementAccepted + "/"
                         + BridgeConfig.totalPlacementAttempts + ")",
                 this.width / 2, top + 310, 0xFFB8B8D0);
+        context.drawCenteredTextWithShadow(this.textRenderer,
+                "All-time rejected placements: " + BridgeConfig.totalPlacementRejected,
+                this.width / 2, top + 320, 0xFFFFB4B4);
         super.render(context, mouseX, mouseY, delta);
     }
 
