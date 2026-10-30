@@ -18,6 +18,10 @@ public final class BridgeConfig {
     public static boolean movementAssist = false;
     public static boolean edgeWarning = true;
     public static boolean showHud = true;
+    public static boolean targetHud = true;
+    public static boolean bedWarsHud = true;
+    public static boolean playerEsp = false;
+    public static boolean tracers = false;
     public static boolean persistentStats = true;
     public static boolean learningEnabled = true;
     public static boolean autoRecoverBlocks = true;
@@ -47,6 +51,10 @@ public final class BridgeConfig {
             movementAssist = data.movementAssist;
             edgeWarning = data.edgeWarning;
             showHud = data.showHud;
+            targetHud = data.targetHud;
+            bedWarsHud = data.bedWarsHud;
+            playerEsp = data.playerEsp;
+            tracers = data.tracers;
             persistentStats = data.persistentStats;
             learningEnabled = data.learningEnabled;
             autoRecoverBlocks = data.autoRecoverBlocks;
@@ -77,6 +85,10 @@ public final class BridgeConfig {
             data.movementAssist = movementAssist;
             data.edgeWarning = edgeWarning;
             data.showHud = showHud;
+            data.targetHud = targetHud;
+            data.bedWarsHud = bedWarsHud;
+            data.playerEsp = playerEsp;
+            data.tracers = tracers;
             data.persistentStats = persistentStats;
             data.learningEnabled = learningEnabled;
             data.autoRecoverBlocks = autoRecoverBlocks;
@@ -118,6 +130,10 @@ public final class BridgeConfig {
         boolean movementAssist;
         boolean edgeWarning = true;
         boolean showHud = true;
+        boolean targetHud = true;
+        boolean bedWarsHud = true;
+        boolean playerEsp;
+        boolean tracers;
         boolean persistentStats = true;
         boolean learningEnabled = true;
         boolean autoRecoverBlocks = true;
