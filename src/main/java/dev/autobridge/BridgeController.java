@@ -42,14 +42,21 @@ public final class BridgeController {
         if (BridgeConfig.silentAimPractice) applySilentAimPractice(client, player);
         if (BridgeConfig.aimAssist) applyPracticeAimAssist(client, player);
 
-        Direction forward = player.getHorizontalFacing();
+        Direction facing = player.getHorizontalFacing();
+        boolean movingForward = client.options.forwardKey.isPressed();
+        boolean movingBackward = client.options.backKey.isPressed();
+        // S-bridging: when S is held, place behind the player rather than in front.
+        // If both W and S are held, prefer the direction matching the player's facing.
+        Direction bridgeDirection = movingBackward && !movingForward
+                ? facing.getOpposite() : facing;
         double speed = player.getVelocity().horizontalLength();
+        boolean movingAlongBridge = movingForward || movingBackward;
 
-        // Automatically hold sneak before walking off a ledge while bridge assist is active.
+        // Automatically hold sneak before walking off a ledge while bridging in either direction.
         // Only release sneak if this controller was the one that pressed it.
         boolean edgeAheadForSneak = BridgeConfig.bridgeAssist && BridgeConfig.edgeWarning
-                && client.options.forwardKey.isPressed() && player.isOnGround()
-                && isUnsupportedAhead(world, player, forward, speed);
+                && movingAlongBridge && player.isOnGround()
+                && isUnsupportedAhead(world, player, bridgeDirection, speed);
         if (edgeAheadForSneak && !player.isSneaking()) {
             client.options.sneakKey.setPressed(true);
             autoSneakActive = true;
@@ -67,7 +74,7 @@ public final class BridgeController {
                 case "AGGRESSIVE", "FAST" -> speed > 0.22 ? 0.95 : speed > 0.12 ? 0.68 : 0.42;
                 default -> speed > 0.22 ? 0.85 : speed > 0.12 ? 0.60 : 0.38;
             };
-            Vec3d look = new Vec3d(forward.getOffsetX(), 0, forward.getOffsetZ());
+            Vec3d look = new Vec3d(bridgeDirection.getOffsetX(), 0, bridgeDirection.getOffsetZ());
             BlockPos aheadFoot = BlockPos.ofFloored(
                     player.getX() + look.x * lookAhead,
                     player.getY() - 0.15,
@@ -85,7 +92,7 @@ public final class BridgeController {
                             "§bAuto-Bridge §7• §eEdge ahead — sneak or stop to avoid falling."), true);
                 }
                 // Emergency recovery: reduce momentum near a detected edge while bridging.
-                if (BridgeConfig.bridgeAssist && client.options.forwardKey.isPressed()) {
+                if (BridgeConfig.bridgeAssist && movingAlongBridge) {
                     Vec3d velocity = player.getVelocity();
                     player.setVelocity(velocity.x * 0.35, velocity.y, velocity.z * 0.35);
                     if (recoveryMessageCooldown == 0 && BridgeConfig.showHud) {
@@ -102,9 +109,8 @@ public final class BridgeController {
         }
 
         if (BridgeConfig.bridgeAssist
-                && client.options.forwardKey.isPressed() && placementCooldown == 0
-                && speed > 0.03) {
-            tryPlaceBridgeBlock(client, player, world, forward, speed);
+                && movingAlongBridge && placementCooldown == 0 && speed > 0.03) {
+            tryPlaceBridgeBlock(client, player, world, bridgeDirection, speed);
         }
     }
 
