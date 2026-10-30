@@ -347,6 +347,10 @@ public final class BridgeController {
         if (BridgeConfig.persistentStats) BridgeConfig.save();
     }
 
+    public static boolean isHudSafeBridgeBlock(ItemStack stack, World world) {
+        return isUsefulBridgeBlock(stack, world);
+    }
+
     public static long getSessionEdgeWarnings() { return sessionEdgeWarnings; }
     public static long getSessionPlacementAttempts() { return sessionPlacementAttempts; }
     public static long getSessionPlacementAccepted() { return sessionPlacementAccepted; }
