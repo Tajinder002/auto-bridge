@@ -8,7 +8,7 @@ import net.minecraft.text.Text;
 
 public final class AutoBridgeScreen extends Screen {
     private static final int PANEL_WIDTH = 380;
-    private static final int PANEL_HEIGHT = 330;
+    private static final int PANEL_HEIGHT = 370;
 
     public AutoBridgeScreen() {
         super(Text.literal("Auto-Bridge"));
@@ -113,6 +113,10 @@ public final class AutoBridgeScreen extends Screen {
             BridgeConfig.edgeWarning = true;
             BridgeConfig.showHud = true;
             BridgeConfig.persistentStats = true;
+            BridgeConfig.learningEnabled = true;
+            BridgeConfig.learningAccepted = 0;
+            BridgeConfig.learningRejected = 0;
+            BridgeConfig.learnedDelayMultiplier = 1.0;
             BridgeConfig.bridgeMode = "NORMAL";
             BridgeConfig.aimStrength = 0.35;
             BridgeConfig.bridgeDelayTicks = 2.0;
@@ -158,15 +162,15 @@ public final class AutoBridgeScreen extends Screen {
                         BridgeConfig.totalPlacementAttempts)
                         + " (" + BridgeConfig.totalPlacementAccepted + "/"
                         + BridgeConfig.totalPlacementAttempts + ")",
-                this.width / 2, top + 310, 0xFFB8B8D0);
+                this.width / 2, top + 326, 0xFFB8B8D0);
         context.drawCenteredTextWithShadow(this.textRenderer,
                 "Learning: " + (BridgeConfig.learningEnabled ? "ON" : "OFF")
                         + " | accepted " + BridgeConfig.learningAccepted
                         + " / rejected " + BridgeConfig.learningRejected,
-                this.width / 2, top + 309, 0xFFB8B8D0);
+                this.width / 2, top + 338, 0xFFB8B8D0);
         context.drawCenteredTextWithShadow(this.textRenderer,
                 "All-time rejected placements: " + BridgeConfig.totalPlacementRejected,
-                this.width / 2, top + 320, 0xFFFFB4B4);
+                this.width / 2, top + 350, 0xFFFFB4B4);
         super.render(context, mouseX, mouseY, delta);
     }
 
