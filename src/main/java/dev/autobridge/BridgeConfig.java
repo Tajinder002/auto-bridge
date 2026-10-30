@@ -77,7 +77,7 @@ public final class BridgeConfig {
     public static String normalizeMode(String mode) {
         if (mode == null) return "NORMAL";
         return switch (mode.toUpperCase(java.util.Locale.ROOT)) {
-            case "SAFE", "FAST" -> mode.toUpperCase(java.util.Locale.ROOT);
+            case "SAFE", "FAST", "PRECISE", "AGGRESSIVE" -> mode.toUpperCase(java.util.Locale.ROOT);
             default -> "NORMAL";
         };
     }
