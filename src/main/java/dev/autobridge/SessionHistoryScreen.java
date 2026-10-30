@@ -20,7 +20,7 @@ public final class SessionHistoryScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
+        context.fill(0, 0, this.width, this.height, 0xC0101018);
         context.drawCenteredTextWithShadow(textRenderer, "SESSION HISTORY (LAST 20 SESSIONS)",
                 width / 2, 18, 0xFF70D7FF);
         List<SessionHistory.Entry> entries = SessionHistory.getEntries();
