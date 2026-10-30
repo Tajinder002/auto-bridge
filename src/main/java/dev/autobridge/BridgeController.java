@@ -67,12 +67,15 @@ public final class BridgeController {
 
     private static void tryPlaceBridgeBlock(MinecraftClient client, ClientPlayerEntity player,
                                             World world, Direction forward) {
-        BlockPos underPlayer = BlockPos.ofFloored(player.getX(), player.getY() - 0.05, player.getZ());
-        BlockPos support = underPlayer.down();
-        if (world.getBlockState(support).isAir()) {
+        // Y is the player's feet height. Flooring Y - epsilon gives the
+        // block at floor level; stepping down again selected the wrong block.
+        BlockPos support = BlockPos.ofFloored(player.getX(), player.getY() - 0.05, player.getZ());
+        if (world.getBlockState(support).isAir()
+                || !world.getBlockState(support).isSolidBlock(world, support)) {
             support = support.offset(forward.getOpposite());
         }
-        if (world.getBlockState(support).isAir() || !world.getBlockState(support).isSolidBlock(world, support)) return;
+        if (world.getBlockState(support).isAir()
+                || !world.getBlockState(support).isSolidBlock(world, support)) return;
 
         BlockPos target = support.offset(forward);
         if (!world.getBlockState(target).isAir()) return;
