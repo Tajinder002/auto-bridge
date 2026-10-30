@@ -125,6 +125,7 @@ public final class AutoBridgeScreen extends Screen {
             BridgeConfig.showHud = true;
             BridgeConfig.persistentStats = true;
             BridgeConfig.learningEnabled = true;
+            BridgeConfig.autoRecoverBlocks = true;
             BridgeConfig.learningAccepted = 0;
             BridgeConfig.learningRejected = 0;
             BridgeConfig.learnedDelayMultiplier = 1.0;
