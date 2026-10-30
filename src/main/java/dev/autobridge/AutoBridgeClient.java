@@ -44,6 +44,7 @@ public final class AutoBridgeClient implements ClientModInitializer {
             while (panicKey.wasPressed()) {
                 BridgeConfig.bridgeAssist = false;
                 BridgeConfig.aimAssist = false;
+                BridgeConfig.silentAimPractice = false;
                 BridgeConfig.movementAssist = false;
                 BridgeConfig.save();
                 notifyPlayer(client, "Panic: all assistance disabled");
