@@ -190,6 +190,12 @@ public final class BridgeController {
             sessionPlacementAccepted++;
             BridgeConfig.totalPlacementAccepted++;
             saveStatsIfEnabled();
+            if (BridgeConfig.learningEnabled) {
+                BridgeConfig.learningAccepted++;
+                // Successful placements gradually allow faster timing, with a conservative lower bound.
+                BridgeConfig.learnedDelayMultiplier = Math.max(0.65, BridgeConfig.learnedDelayMultiplier * 0.985);
+                if (BridgeConfig.persistentStats) BridgeConfig.save();
+            }
             double factor = switch (BridgeConfig.normalizeMode(BridgeConfig.bridgeMode)) {
                 case "SAFE" -> 1.45;
                 case "PRECISE" -> 1.15;
@@ -205,10 +211,16 @@ public final class BridgeController {
                     yield speedFactor * learningFactor;
                 }
             };
-            placementCooldown = Math.max(1, (int) Math.round(BridgeConfig.bridgeDelayTicks * factor));
+            double learningMultiplier = BridgeConfig.learningEnabled ? BridgeConfig.learnedDelayMultiplier : 1.0;
+            placementCooldown = Math.max(1, (int) Math.round(BridgeConfig.bridgeDelayTicks * factor * learningMultiplier));
         } else {
             sessionPlacementRejected++;
             BridgeConfig.totalPlacementRejected++;
+            if (BridgeConfig.learningEnabled) {
+                BridgeConfig.learningRejected++;
+                // Rejections increase the delay so the controller becomes more cautious.
+                BridgeConfig.learnedDelayMultiplier = Math.min(1.8, BridgeConfig.learnedDelayMultiplier * 1.12);
+            }
             saveStatsIfEnabled();
             // Recover from a rejected placement by reducing forward momentum and
             // allowing a short retry window instead of continuing at full speed.
