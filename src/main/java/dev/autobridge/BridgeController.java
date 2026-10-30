@@ -37,6 +37,8 @@ public final class BridgeController {
         if (noBlockWarningCooldown > 0) noBlockWarningCooldown--;
         if (recoveryMessageCooldown > 0) recoveryMessageCooldown--;
 
+        if (BridgeConfig.aimAssist) applyPracticeAimAssist(client, player);
+
         Direction forward = player.getHorizontalFacing();
         double speed = player.getVelocity().horizontalLength();
 
@@ -88,6 +90,49 @@ public final class BridgeController {
                 && speed > 0.03) {
             tryPlaceBridgeBlock(client, player, world, forward, speed);
         }
+    }
+
+
+    private static void applyPracticeAimAssist(MinecraftClient client, ClientPlayerEntity player) {
+        // Deliberately restricted to single-player practice worlds.
+        if (!client.isInSingleplayer() || !client.options.attackKey.isPressed()) return;
+
+        net.minecraft.util.math.Box searchBox = player.getBoundingBox().expand(5.0);
+        net.minecraft.entity.LivingEntity bestTarget = null;
+        double bestAngle = Double.MAX_VALUE;
+        Vec3d eye = player.getEyePos();
+
+        for (net.minecraft.entity.LivingEntity target :
+                client.world.getEntitiesByClass(net.minecraft.entity.LivingEntity.class, searchBox,
+                        entity -> entity != player && entity.isAlive() && !entity.isSpectator())) {
+            Vec3d toTarget = target.getEyePos().subtract(eye);
+            double distance = toTarget.length();
+            if (distance < 0.001 || distance > 5.0) continue;
+
+            double targetYaw = Math.toDegrees(Math.atan2(toTarget.z, toTarget.x)) - 90.0;
+            double targetPitch = -Math.toDegrees(Math.atan2(toTarget.y,
+                    Math.sqrt(toTarget.x * toTarget.x + toTarget.z * toTarget.z)));
+            double yawDelta = net.minecraft.util.math.MathHelper.wrapDegrees(targetYaw - player.getYaw());
+            double pitchDelta = net.minecraft.util.math.MathHelper.wrapDegrees(targetPitch - player.getPitch());
+            double angle = Math.sqrt(yawDelta * yawDelta + pitchDelta * pitchDelta);
+
+            // Keep assistance subtle and require the target to already be near the crosshair.
+            if (angle <= 28.0 && angle < bestAngle) {
+                bestAngle = angle;
+                bestTarget = target;
+            }
+        }
+
+        if (bestTarget == null) return;
+        Vec3d direction = bestTarget.getEyePos().subtract(eye);
+        double horizontal = Math.sqrt(direction.x * direction.x + direction.z * direction.z);
+        float targetYaw = (float) (Math.toDegrees(Math.atan2(direction.z, direction.x)) - 90.0);
+        float targetPitch = (float) -Math.toDegrees(Math.atan2(direction.y, horizontal));
+        float strength = (float) Math.max(0.05, Math.min(0.35, BridgeConfig.aimStrength * 0.35));
+        float yawStep = net.minecraft.util.math.MathHelper.wrapDegrees(targetYaw - player.getYaw()) * strength;
+        float pitchStep = net.minecraft.util.math.MathHelper.wrapDegrees(targetPitch - player.getPitch()) * strength;
+        player.setYaw(player.getYaw() + yawStep);
+        player.setPitch(Math.max(-90.0F, Math.min(90.0F, player.getPitch() + pitchStep)));
     }
 
     private static void applyMovementAssist(MinecraftClient client, ClientPlayerEntity player,
