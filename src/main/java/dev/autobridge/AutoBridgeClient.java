@@ -48,6 +48,7 @@ public final class AutoBridgeClient implements ClientModInitializer {
                 BridgeConfig.save();
                 notifyPlayer(client, "Panic: all assistance disabled");
             }
+            SessionHistory.tick(client);
             BridgeController.tick(client);
         });
     }
