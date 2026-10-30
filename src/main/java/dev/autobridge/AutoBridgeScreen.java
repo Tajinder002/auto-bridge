@@ -8,7 +8,7 @@ import net.minecraft.text.Text;
 
 public final class AutoBridgeScreen extends Screen {
     private static final int PANEL_WIDTH = 380;
-    private static final int PANEL_HEIGHT = 370;
+    private static final int PANEL_HEIGHT = 394;
 
     public AutoBridgeScreen() {
         super(Text.literal("Auto-Bridge"));
@@ -63,7 +63,13 @@ public final class AutoBridgeScreen extends Screen {
             BridgeConfig.save();
         }).dimensions(left + 15, top + 157, PANEL_WIDTH - 30, 22).build());
 
-        addDrawableChild(new SliderWidget(left + 15, top + 185, PANEL_WIDTH - 30, 20,
+        addDrawableChild(ButtonWidget.builder(toggleText("Silent Aim (single-player only)", BridgeConfig.silentAimPractice), button -> {
+            BridgeConfig.silentAimPractice = !BridgeConfig.silentAimPractice;
+            button.setMessage(toggleText("Silent Aim (single-player only)", BridgeConfig.silentAimPractice));
+            BridgeConfig.save();
+        }).dimensions(left + 15, top + 181, PANEL_WIDTH - 30, 22).build());
+
+        addDrawableChild(new SliderWidget(left + 15, top + 209, PANEL_WIDTH - 30, 20,
                 Text.literal("Aim strength: " + percent(BridgeConfig.aimStrength)), BridgeConfig.aimStrength) {
             @Override protected void updateMessage() {
                 setMessage(Text.literal("Aim strength: " + percent(this.value)));
@@ -74,7 +80,7 @@ public final class AutoBridgeScreen extends Screen {
             }
         });
 
-        addDrawableChild(new SliderWidget(left + 15, top + 212, PANEL_WIDTH - 30, 20,
+        addDrawableChild(new SliderWidget(left + 15, top + 236, PANEL_WIDTH - 30, 20,
                 Text.literal("Placement delay: " + (int) BridgeConfig.bridgeDelayTicks + " ticks"),
                 (BridgeConfig.bridgeDelayTicks - 1.0) / 9.0) {
             @Override protected void updateMessage() {
@@ -96,19 +102,20 @@ public final class AutoBridgeScreen extends Screen {
             };
             button.setMessage(Text.literal("Bridge mode: " + BridgeConfig.bridgeMode));
             BridgeConfig.save();
-        }).dimensions(left + 15, top + 240, PANEL_WIDTH - 30, 24).build());
+        }).dimensions(left + 15, top + 264, PANEL_WIDTH - 30, 24).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("View Session History"), button -> {
             if (client != null) client.setScreen(new SessionHistoryScreen());
-        }).dimensions(left + 15, top + 268, PANEL_WIDTH - 30, 22).build());
+        }).dimensions(left + 15, top + 292, PANEL_WIDTH - 30, 22).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset session stats"), button -> {
             BridgeController.resetSessionStats();
-        }).dimensions(left + 15, top + 292, buttonWidth, 22).build());
+        }).dimensions(left + 15, top + 316, buttonWidth, 22).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset settings + stats"), button -> {
             BridgeConfig.bridgeAssist = false;
             BridgeConfig.aimAssist = false;
+            BridgeConfig.silentAimPractice = false;
             BridgeConfig.movementAssist = false;
             BridgeConfig.edgeWarning = true;
             BridgeConfig.showHud = true;
@@ -123,7 +130,7 @@ public final class AutoBridgeScreen extends Screen {
             BridgeController.resetAllStats();
             BridgeConfig.save();
             clearAndInit();
-        }).dimensions(right, top + 292, buttonWidth, 22).build());
+        }).dimensions(right, top + 316, buttonWidth, 22).build());
     }
 
     private static Text toggleText(String name, boolean enabled) {
