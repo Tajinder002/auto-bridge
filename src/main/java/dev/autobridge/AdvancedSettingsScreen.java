@@ -9,7 +9,7 @@ import net.minecraft.text.Text;
 public final class AdvancedSettingsScreen extends Screen {
     private final Screen parent;
     private static final int PANEL_WIDTH = 340;
-    private static final int PANEL_HEIGHT = 190;
+    private static final int PANEL_HEIGHT = 220;
 
     public AdvancedSettingsScreen(Screen parent) {
         super(Text.literal("Auto-Bridge Advanced Settings"));
@@ -43,15 +43,24 @@ public final class AdvancedSettingsScreen extends Screen {
                 BridgeConfig.save();
             }
         });
+        addDrawableChild(ButtonWidget.builder(
+                Text.literal("Auto-recover blocks from inventory: " + (BridgeConfig.autoRecoverBlocks ? "ON" : "OFF")),
+                button -> {
+                    BridgeConfig.autoRecoverBlocks = !BridgeConfig.autoRecoverBlocks;
+                    button.setMessage(Text.literal("Auto-recover blocks from inventory: "
+                            + (BridgeConfig.autoRecoverBlocks ? "ON" : "OFF")));
+                    BridgeConfig.save();
+                }).dimensions(left + 20, top + 112, PANEL_WIDTH - 40, 20).build());
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset advanced settings"), button -> {
             BridgeConfig.aimRange = 5.0;
             BridgeConfig.aimAngle = 28.0;
+            BridgeConfig.autoRecoverBlocks = true;
             BridgeConfig.save();
             if (client != null) client.setScreen(new AdvancedSettingsScreen(parent));
-        }).dimensions(left + 20, top + 116, PANEL_WIDTH - 40, 20).build());
+        }).dimensions(left + 20, top + 142, PANEL_WIDTH - 40, 20).build());
         addDrawableChild(ButtonWidget.builder(Text.literal("Done"), button -> {
             if (client != null) client.setScreen(parent);
-        }).dimensions(left + 20, top + 146, PANEL_WIDTH - 40, 20).build());
+        }).dimensions(left + 20, top + 172, PANEL_WIDTH - 40, 20).build());
     }
 
     @Override
