@@ -20,6 +20,8 @@ public final class BridgeConfig {
     public static boolean showHud = true;
     public static boolean persistentStats = true;
     public static boolean learningEnabled = true;
+        boolean autoRecoverBlocks = true;
+    public static boolean autoRecoverBlocks = true;
     public static long learningAccepted;
     public static long learningRejected;
     public static double learnedDelayMultiplier = 1.0;
@@ -48,6 +50,7 @@ public final class BridgeConfig {
             showHud = data.showHud;
             persistentStats = data.persistentStats;
             learningEnabled = data.learningEnabled;
+            autoRecoverBlocks = data.autoRecoverBlocks;
             learningAccepted = Math.max(0, data.learningAccepted);
             learningRejected = Math.max(0, data.learningRejected);
             learnedDelayMultiplier = clamp(data.learnedDelayMultiplier, 0.65, 1.8);
@@ -77,6 +80,7 @@ public final class BridgeConfig {
             data.showHud = showHud;
             data.persistentStats = persistentStats;
             data.learningEnabled = learningEnabled;
+            data.autoRecoverBlocks = autoRecoverBlocks;
             data.learningAccepted = learningAccepted;
             data.learningRejected = learningRejected;
             data.learnedDelayMultiplier = clamp(learnedDelayMultiplier, 0.65, 1.8);
