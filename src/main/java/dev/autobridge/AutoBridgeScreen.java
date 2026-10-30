@@ -7,8 +7,8 @@ import net.minecraft.client.gui.widget.SliderWidget;
 import net.minecraft.text.Text;
 
 public final class AutoBridgeScreen extends Screen {
-    private static final int PANEL_WIDTH = 360;
-    private static final int PANEL_HEIGHT = 302;
+    private static final int PANEL_WIDTH = 380;
+    private static final int PANEL_HEIGHT = 330;
 
     public AutoBridgeScreen() {
         super(Text.literal("Auto-Bridge"));
@@ -18,7 +18,7 @@ public final class AutoBridgeScreen extends Screen {
     protected void init() {
         int left = (this.width - PANEL_WIDTH) / 2;
         int top = (this.height - PANEL_HEIGHT) / 2;
-        int buttonWidth = 160;
+        int buttonWidth = 170;
         int right = left + PANEL_WIDTH - 15 - buttonWidth;
 
         addDrawableChild(ButtonWidget.builder(toggleText("Bridge Assist", BridgeConfig.bridgeAssist), button -> {
@@ -51,7 +51,13 @@ public final class AutoBridgeScreen extends Screen {
             BridgeConfig.save();
         }).dimensions(left + 15, top + 129, buttonWidth, 24).build());
 
-        addDrawableChild(new SliderWidget(left + 15, top + 165, PANEL_WIDTH - 30, 20,
+        addDrawableChild(ButtonWidget.builder(toggleText("Persistent Stats", BridgeConfig.persistentStats), button -> {
+            BridgeConfig.persistentStats = !BridgeConfig.persistentStats;
+            button.setMessage(toggleText("Persistent Stats", BridgeConfig.persistentStats));
+            BridgeConfig.save();
+        }).dimensions(right, top + 129, buttonWidth, 24).build());
+
+        addDrawableChild(new SliderWidget(left + 15, top + 163, PANEL_WIDTH - 30, 20,
                 Text.literal("Aim strength: " + percent(BridgeConfig.aimStrength)), BridgeConfig.aimStrength) {
             @Override protected void updateMessage() {
                 setMessage(Text.literal("Aim strength: " + percent(this.value)));
@@ -62,7 +68,7 @@ public final class AutoBridgeScreen extends Screen {
             }
         });
 
-        addDrawableChild(new SliderWidget(left + 15, top + 193, PANEL_WIDTH - 30, 20,
+        addDrawableChild(new SliderWidget(left + 15, top + 190, PANEL_WIDTH - 30, 20,
                 Text.literal("Placement delay: " + (int) BridgeConfig.bridgeDelayTicks + " ticks"),
                 (BridgeConfig.bridgeDelayTicks - 1.0) / 9.0) {
             @Override protected void updateMessage() {
@@ -74,21 +80,34 @@ public final class AutoBridgeScreen extends Screen {
             }
         });
 
+        addDrawableChild(ButtonWidget.builder(Text.literal("Bridge mode: " + BridgeConfig.normalizeMode(BridgeConfig.bridgeMode)), button -> {
+            BridgeConfig.bridgeMode = switch (BridgeConfig.normalizeMode(BridgeConfig.bridgeMode)) {
+                case "SAFE" -> "NORMAL";
+                case "NORMAL" -> "FAST";
+                default -> "SAFE";
+            };
+            button.setMessage(Text.literal("Bridge mode: " + BridgeConfig.bridgeMode));
+            BridgeConfig.save();
+        }).dimensions(left + 15, top + 218, PANEL_WIDTH - 30, 24).build());
+
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset session stats"), button -> {
             BridgeController.resetSessionStats();
-        }).dimensions(left + 15, top + 241, buttonWidth, 24).build());
+        }).dimensions(left + 15, top + 252, buttonWidth, 24).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("Reset settings"), button -> {
+        addDrawableChild(ButtonWidget.builder(Text.literal("Reset settings + stats"), button -> {
             BridgeConfig.bridgeAssist = false;
             BridgeConfig.aimAssist = false;
             BridgeConfig.movementAssist = false;
             BridgeConfig.edgeWarning = true;
             BridgeConfig.showHud = true;
+            BridgeConfig.persistentStats = true;
+            BridgeConfig.bridgeMode = "NORMAL";
             BridgeConfig.aimStrength = 0.35;
             BridgeConfig.bridgeDelayTicks = 2.0;
+            BridgeController.resetAllStats();
             BridgeConfig.save();
             clearAndInit();
-        }).dimensions(right, top + 241, buttonWidth, 24).build());
+        }).dimensions(right, top + 252, buttonWidth, 24).build());
     }
 
     private static Text toggleText(String name, boolean enabled) {
@@ -106,12 +125,19 @@ public final class AutoBridgeScreen extends Screen {
         int top = (this.height - PANEL_HEIGHT) / 2;
         context.fill(left, top, left + PANEL_WIDTH, top + PANEL_HEIGHT, 0xF0181A27);
         context.fill(left, top, left + PANEL_WIDTH, top + 3, 0xFF8B5CF6);
-        context.drawCenteredTextWithShadow(this.textRenderer, "AUTO-BRIDGE", this.width / 2, top + 14, 0xFFFFFFFF);
-        context.drawCenteredTextWithShadow(this.textRenderer, "Minecraft 1.21.11 • Private-server practice", this.width / 2, top + 32, 0xFFB8B8D0);
+        context.drawCenteredTextWithShadow(this.textRenderer, "AUTO-BRIDGE", this.width / 2, top + 12, 0xFFFFFFFF);
+        context.drawCenteredTextWithShadow(this.textRenderer, "Minecraft 1.21.11 • Private-server practice", this.width / 2, top + 29, 0xFFB8B8D0);
         context.drawCenteredTextWithShadow(this.textRenderer,
-                "Edge warnings: " + BridgeController.getSessionEdgeWarnings()
-                        + "  |  Placement attempts: " + BridgeController.getSessionPlacementAttempts(),
-                this.width / 2, top + 48, 0xFFE4D7FF);
+                "Session: edges " + BridgeController.getSessionEdgeWarnings()
+                        + " | attempts " + BridgeController.getSessionPlacementAttempts()
+                        + " | accepted " + BridgeController.getSessionPlacementAccepted()
+                        + " | rejected " + BridgeController.getSessionPlacementRejected(),
+                this.width / 2, top + 46, 0xFFE4D7FF);
+        context.drawCenteredTextWithShadow(this.textRenderer,
+                "All-time: edges " + BridgeConfig.totalEdgeWarnings
+                        + " | attempts " + BridgeConfig.totalPlacementAttempts
+                        + " | accepted " + BridgeConfig.totalPlacementAccepted,
+                this.width / 2, top + 57, 0xFFB8B8D0);
         super.render(context, mouseX, mouseY, delta);
     }
 
