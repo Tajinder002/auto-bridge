@@ -23,12 +23,26 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.14'
+          gradle-version: '9.2.1'
+      - name: Verify toolchain
+        run: |
+          java -version
+          gradle --version
       - name: Build mod
-        run: gradle build --no-daemon
+        run: gradle build --no-daemon --stacktrace
       - name: Upload JAR
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: auto-bridge-${{ github.sha }}
           path: build/libs/*.jar
           if-no-files-found: error
+      - name: Upload failure reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-bridge-build-reports
+          path: |
+            build/reports/
+            build/test-results/
+          if-no-files-found: ignore
