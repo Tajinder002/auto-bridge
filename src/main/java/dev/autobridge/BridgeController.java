@@ -2,6 +2,8 @@ package dev.autobridge;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.block.Block;
+import net.minecraft.block.FallingBlock;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
@@ -56,42 +58,35 @@ public final class BridgeController {
             }
         }
 
-        // Place only while the player is deliberately moving forward, has a block selected,
-        // and a solid support block exists. This uses normal client interaction packets.
+        // Only attempt placement during deliberate forward movement.
         if (BridgeConfig.bridgeAssist
                 && client.options.forwardKey.isPressed() && placementCooldown == 0
-                && player.getVelocity().horizontalLength() > 0.03) {
+                && speed > 0.03) {
             tryPlaceBridgeBlock(client, player, world, forward);
         }
     }
 
     private static void tryPlaceBridgeBlock(MinecraftClient client, ClientPlayerEntity player,
                                             World world, Direction forward) {
-        // Y is the player's feet height. Flooring Y - epsilon gives the
-        // block at floor level; stepping down again selected the wrong block.
         BlockPos support = BlockPos.ofFloored(player.getX(), player.getY() - 0.05, player.getZ());
-        if (world.getBlockState(support).isAir()
-                || !world.getBlockState(support).isSolidBlock(world, support)) {
+        if (!isSolidSupport(world, support)) {
             support = support.offset(forward.getOpposite());
         }
-        if (world.getBlockState(support).isAir()
-                || !world.getBlockState(support).isSolidBlock(world, support)) return;
+        if (!isSolidSupport(world, support)) return;
 
         BlockPos target = support.offset(forward);
-        if (!world.getBlockState(target).isAir()) return;
+        if (!world.getBlockState(target).isReplaceable()) return;
 
         ItemStack stack = player.getMainHandStack();
-        if (!(stack.getItem() instanceof BlockItem)) {
-            if (!selectHotbarBlock(player)) return;
+        if (!isUsefulBridgeBlock(stack, world)) {
+            if (!selectHotbarBlock(player, world)) return;
             stack = player.getMainHandStack();
         }
-        if (!(stack.getItem() instanceof BlockItem)) return;
+        if (!isUsefulBridgeBlock(stack, world)) return;
 
         Vec3d hitPos = Vec3d.ofCenter(support).add(
                 forward.getOffsetX() * 0.5, 0.0, forward.getOffsetZ() * 0.5);
         BlockHitResult hit = new BlockHitResult(hitPos, forward, support, false);
-        // Count only interactions accepted by the client; server-side protection or
-        // a rejected interaction can still prevent the block from appearing.
         net.minecraft.util.ActionResult result =
                 client.interactionManager.interactBlock(player, Hand.MAIN_HAND, hit);
         if (result.isAccepted()) {
@@ -99,20 +94,37 @@ public final class BridgeController {
             sessionPlacementAttempts++;
             placementCooldown = Math.max(1, (int) Math.round(BridgeConfig.bridgeDelayTicks));
         } else {
-            // Retry quickly rather than waiting the full configured delay after rejection.
             placementCooldown = 1;
         }
     }
 
-    private static boolean selectHotbarBlock(ClientPlayerEntity player) {
+    private static boolean isSolidSupport(World world, BlockPos pos) {
+        return !world.getBlockState(pos).isAir()
+                && world.getBlockState(pos).isSolidBlock(world, pos);
+    }
+
+    // Prefer full solid blocks that can safely support the player; avoid gravity blocks
+    // such as sand and gravel, and avoid non-solid block items such as torches.
+    private static boolean isUsefulBridgeBlock(ItemStack stack, World world) {
+        if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) return false;
+        Block block = blockItem.getBlock();
+        if (block instanceof FallingBlock) return false;
+        return block.getDefaultState().isSolidBlock(world, BlockPos.ORIGIN);
+    }
+
+    private static boolean selectHotbarBlock(ClientPlayerEntity player, World world) {
+        int bestSlot = -1;
+        int bestCount = -1;
         for (int slot = 0; slot < 9; slot++) {
-            ItemStack stack = player.getInventory().getStack(slot);
-            if (stack.getItem() instanceof BlockItem) {
-                player.getInventory().setSelectedSlot(slot);
-                return true;
+            ItemStack candidate = player.getInventory().getStack(slot);
+            if (isUsefulBridgeBlock(candidate, player.getWorld()) && candidate.getCount() > bestCount) {
+                bestSlot = slot;
+                bestCount = candidate.getCount();
             }
         }
-        return false;
+        if (bestSlot < 0) return false;
+        player.getInventory().setSelectedSlot(bestSlot);
+        return true;
     }
 
     public static long getSessionEdgeWarnings() {
