@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "auto_bridge",
+  "version": "${version}",
+  "name": "Auto-Bridge",
+  "description": "A configurable bridging practice and movement-assistance mod for Minecraft Java 1.21.11.",
+  "authors": ["Auto-Bridge contributors"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["dev.autobridge.AutoBridgeClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
