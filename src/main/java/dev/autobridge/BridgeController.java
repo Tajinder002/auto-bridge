@@ -37,6 +37,7 @@ public final class BridgeController {
         if (noBlockWarningCooldown > 0) noBlockWarningCooldown--;
         if (recoveryMessageCooldown > 0) recoveryMessageCooldown--;
 
+        if (BridgeConfig.silentAimPractice) applySilentAimPractice(client, player);
         if (BridgeConfig.aimAssist) applyPracticeAimAssist(client, player);
 
         Direction forward = player.getHorizontalFacing();
@@ -92,6 +93,38 @@ public final class BridgeController {
         }
     }
 
+
+
+    private static void applySilentAimPractice(MinecraftClient client, ClientPlayerEntity player) {
+        // Local single-player practice only; never changes view rotation or targets remote players.
+        if (!client.isInSingleplayer() || !client.options.attackKey.isPressed()
+                || client.world == null) return;
+
+        Vec3d eye = player.getEyePos();
+        net.minecraft.entity.LivingEntity best = null;
+        double bestAngle = 24.0;
+        for (net.minecraft.entity.LivingEntity target :
+                client.world.getEntitiesByClass(net.minecraft.entity.LivingEntity.class,
+                        player.getBoundingBox().expand(4.5),
+                        entity -> entity != player && entity.isAlive() && !entity.isSpectator())) {
+            Vec3d delta = target.getEyePos().subtract(eye);
+            double distance = delta.length();
+            if (distance < 0.001 || distance > 4.5) continue;
+            double yaw = Math.toDegrees(Math.atan2(delta.z, delta.x)) - 90.0;
+            double pitch = -Math.toDegrees(Math.atan2(delta.y,
+                    Math.sqrt(delta.x * delta.x + delta.z * delta.z)));
+            double yawDelta = net.minecraft.util.math.MathHelper.wrapDegrees(yaw - player.getYaw());
+            double pitchDelta = net.minecraft.util.math.MathHelper.wrapDegrees(pitch - player.getPitch());
+            double angle = Math.sqrt(yawDelta * yawDelta + pitchDelta * pitchDelta);
+            if (angle < bestAngle) {
+                bestAngle = angle;
+                best = target;
+            }
+        }
+        if (best != null) {
+            client.crosshairTarget = new net.minecraft.util.hit.EntityHitResult(best);
+        }
+    }
 
     private static void applyPracticeAimAssist(MinecraftClient client, ClientPlayerEntity player) {
         // Deliberately restricted to single-player practice worlds.
