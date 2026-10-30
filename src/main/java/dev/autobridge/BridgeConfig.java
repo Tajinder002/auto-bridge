@@ -20,7 +20,6 @@ public final class BridgeConfig {
     public static boolean showHud = true;
     public static boolean persistentStats = true;
     public static boolean learningEnabled = true;
-        boolean autoRecoverBlocks = true;
     public static boolean autoRecoverBlocks = true;
     public static long learningAccepted;
     public static long learningRejected;
@@ -121,6 +120,7 @@ public final class BridgeConfig {
         boolean showHud = true;
         boolean persistentStats = true;
         boolean learningEnabled = true;
+        boolean autoRecoverBlocks = true;
         long learningAccepted;
         long learningRejected;
         double learnedDelayMultiplier = 1.0;
