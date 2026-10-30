@@ -7,6 +7,8 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
@@ -66,14 +68,27 @@ public final class AutoBridgeClient implements ClientModInitializer {
         long attempts = BridgeController.getSessionPlacementAttempts();
         long accepted = BridgeController.getSessionPlacementAccepted();
         double rate = attempts == 0 ? 100.0 : accepted * 100.0 / attempts;
-        String[] lines = {
-                "AUTO-BRIDGE",
-                "Assist: " + (BridgeConfig.bridgeAssist ? "ON" : "OFF"),
-                "Mode: " + BridgeConfig.normalizeMode(BridgeConfig.bridgeMode),
-                "Blocks: " + blocks,
-                String.format(java.util.Locale.ROOT, "Success: %.1f%%", rate),
-                "Placed: " + accepted + "/" + attempts
-        };
+        java.util.List<String> hudLines = new java.util.ArrayList<>();
+        hudLines.add("AUTO-BRIDGE  •  BEDWARS");
+        hudLines.add("Scaffold: " + (BridgeConfig.bridgeAssist ? "ON" : "OFF")
+                + "   Mode: " + BridgeConfig.normalizeMode(BridgeConfig.bridgeMode));
+        hudLines.add("Blocks: " + blocks + "   Placed: " + accepted + "/" + attempts);
+        hudLines.add(String.format(java.util.Locale.ROOT, "Placement success: %.1f%%", rate));
+        if (BridgeConfig.bedWarsHud) {
+            hudLines.add("XYZ: " + (int) client.player.getX() + " / "
+                    + (int) client.player.getY() + " / " + (int) client.player.getZ());
+            if (client.getCurrentServerEntry() != null) {
+                hudLines.add("Server: " + client.getCurrentServerEntry().address);
+            } else {
+                hudLines.add("Server: Single-player");
+            }
+        }
+        if (BridgeConfig.targetHud && client.crosshairTarget instanceof EntityHitResult hit
+                && hit.getEntity() instanceof LivingEntity target && target.isAlive()) {
+            hudLines.add("TARGET  " + target.getName().getString() + "  "
+                    + String.format(java.util.Locale.ROOT, "%.1f HP", target.getHealth()));
+        }
+        String[] lines = hudLines.toArray(String[]::new);
         int width = 0;
         for (String line : lines) width = Math.max(width, client.textRenderer.getWidth(line));
         int x = 8, y = 8, pad = 6, lineHeight = 11;
