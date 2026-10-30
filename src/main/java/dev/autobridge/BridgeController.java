@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -387,6 +388,48 @@ public final class BridgeController {
             if (score > bestScore) {
                 bestSlot = slot;
                 bestScore = score;
+            }
+        }
+        if (bestSlot < 0 && BridgeConfig.autoRecoverBlocks) {
+            // Refill an empty hotbar slot from the main inventory, without replacing
+            // an occupied hotbar item or moving valuable items out of the hotbar.
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.interactionManager != null && player.currentScreenHandler != null) {
+                int emptyHotbar = -1;
+                for (int slot = 0; slot < 9; slot++) {
+                    if (player.getInventory().getStack(slot).isEmpty()) {
+                        emptyHotbar = slot;
+                        break;
+                    }
+                }
+                if (emptyHotbar >= 0) {
+                    for (int inventorySlot = 9; inventorySlot < 36; inventorySlot++) {
+                        ItemStack candidate = player.getInventory().getStack(inventorySlot);
+                        if (!isUsefulBridgeBlock(candidate, world)) continue;
+                        String itemId = Registries.ITEM.getId(candidate.getItem()).getPath();
+                        if (isValuableMaterial(itemId)) continue;
+                        client.interactionManager.clickSlot(
+                                player.currentScreenHandler.syncId,
+                                inventorySlot,
+                                emptyHotbar,
+                                SlotActionType.SWAP,
+                                player);
+                        break;
+                    }
+                }
+            }
+            // Re-check the hotbar after attempting an inventory refill.
+            for (int slot = 0; slot < 9; slot++) {
+                ItemStack candidate = player.getInventory().getStack(slot);
+                if (!isUsefulBridgeBlock(candidate, world)) continue;
+                String itemId = Registries.ITEM.getId(candidate.getItem()).getPath();
+                int score = candidate.getCount() * 10;
+                if (isPreferredBridgeMaterial(itemId)) score += 1000;
+                if (isValuableMaterial(itemId)) score -= 2000;
+                if (score > bestScore) {
+                    bestSlot = slot;
+                    bestScore = score;
+                }
             }
         }
         if (bestSlot < 0) return false;
