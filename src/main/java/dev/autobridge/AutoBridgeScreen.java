@@ -84,6 +84,8 @@ public final class AutoBridgeScreen extends Screen {
             BridgeConfig.bridgeMode = switch (BridgeConfig.normalizeMode(BridgeConfig.bridgeMode)) {
                 case "SAFE" -> "NORMAL";
                 case "NORMAL" -> "FAST";
+                case "FAST" -> "AGGRESSIVE";
+                case "AGGRESSIVE" -> "PRECISE";
                 default -> "SAFE";
             };
             button.setMessage(Text.literal("Bridge mode: " + BridgeConfig.bridgeMode));
