@@ -8,7 +8,7 @@ import net.minecraft.text.Text;
 
 public final class AutoBridgeScreen extends Screen {
     private static final int PANEL_WIDTH = 380;
-    private static final int PANEL_HEIGHT = 394;
+    private static final int PANEL_HEIGHT = 418;
 
     public AutoBridgeScreen() {
         super(Text.literal("Auto-Bridge"));
@@ -104,13 +104,17 @@ public final class AutoBridgeScreen extends Screen {
             BridgeConfig.save();
         }).dimensions(left + 15, top + 264, PANEL_WIDTH - 30, 24).build());
 
+        addDrawableChild(ButtonWidget.builder(Text.literal("Advanced Settings"), button -> {
+            if (client != null) client.setScreen(new AdvancedSettingsScreen(this));
+        }).dimensions(left + 15, top + 292, PANEL_WIDTH - 30, 22).build());
+
         addDrawableChild(ButtonWidget.builder(Text.literal("View Session History"), button -> {
             if (client != null) client.setScreen(new SessionHistoryScreen());
-        }).dimensions(left + 15, top + 292, PANEL_WIDTH - 30, 22).build());
+        }).dimensions(left + 15, top + 316, PANEL_WIDTH - 30, 22).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset session stats"), button -> {
             BridgeController.resetSessionStats();
-        }).dimensions(left + 15, top + 316, buttonWidth, 22).build());
+        }).dimensions(left + 15, top + 340, buttonWidth, 22).build());
 
         addDrawableChild(ButtonWidget.builder(Text.literal("Reset settings + stats"), button -> {
             BridgeConfig.bridgeAssist = false;
@@ -127,10 +131,12 @@ public final class AutoBridgeScreen extends Screen {
             BridgeConfig.bridgeMode = "NORMAL";
             BridgeConfig.aimStrength = 0.35;
             BridgeConfig.bridgeDelayTicks = 2.0;
+            BridgeConfig.aimRange = 5.0;
+            BridgeConfig.aimAngle = 28.0;
             BridgeController.resetAllStats();
             BridgeConfig.save();
             clearAndInit();
-        }).dimensions(right, top + 316, buttonWidth, 22).build());
+        }).dimensions(right, top + 340, buttonWidth, 22).build());
     }
 
     private static Text toggleText(String name, boolean enabled) {
@@ -169,15 +175,15 @@ public final class AutoBridgeScreen extends Screen {
                         BridgeConfig.totalPlacementAttempts)
                         + " (" + BridgeConfig.totalPlacementAccepted + "/"
                         + BridgeConfig.totalPlacementAttempts + ")",
-                this.width / 2, top + 326, 0xFFB8B8D0);
+                this.width / 2, top + 365, 0xFFB8B8D0);
         context.drawCenteredTextWithShadow(this.textRenderer,
                 "Learning: " + (BridgeConfig.learningEnabled ? "ON" : "OFF")
                         + " | accepted " + BridgeConfig.learningAccepted
                         + " / rejected " + BridgeConfig.learningRejected,
-                this.width / 2, top + 338, 0xFFB8B8D0);
+                this.width / 2, top + 377, 0xFFB8B8D0);
         context.drawCenteredTextWithShadow(this.textRenderer,
                 "All-time rejected placements: " + BridgeConfig.totalPlacementRejected,
-                this.width / 2, top + 350, 0xFFFFB4B4);
+                this.width / 2, top + 389, 0xFFFFB4B4);
         super.render(context, mouseX, mouseY, delta);
     }
 
