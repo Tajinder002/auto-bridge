@@ -115,7 +115,9 @@ public final class BridgeController {
         }
 
         ItemStack stack = player.getMainHandStack();
-        if (!isUsefulBridgeBlock(stack, world)) {
+        boolean heldValuable = !stack.isEmpty()
+                && isValuableMaterial(Registries.ITEM.getId(stack.getItem()).getPath());
+        if (!isUsefulBridgeBlock(stack, world) || heldValuable) {
             if (!selectHotbarBlock(player, world)) {
                 placementCooldown = 2;
                 if (BridgeConfig.showHud && noBlockWarningCooldown == 0) {
